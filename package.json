@@ -1,0 +1,16 @@
+{
+  "name": "stayprep",
+  "version": "1.0.0",
+  "description": "Schul-App für das berufliche Gymnasium (Klasse 11–13): private Notenverwaltung, Jahrgangs-Hausaufgabenheft, Lehrplan und Lernzusammenfassungen.",
+  "type": "module",
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node server/index.js",
+    "test": "node --test test/*.test.js",
+    "set-code": "node scripts/set-code.js"
+  },
+  "license": "MIT"
+}
