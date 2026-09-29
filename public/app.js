@@ -71,6 +71,37 @@ function store(key, value) {
   return value;
 }
 
+/** Button, der erst nach einem zweiten Klick auslöst (statt confirm()). */
+function confirmButton(label, question, action, attrs = {}) {
+  let armed = false;
+  let timer;
+  const btn = h('button', {
+    class: 'link',
+    ...attrs,
+    onclick: async () => {
+      if (!armed) {
+        armed = true;
+        btn.textContent = question;
+        btn.classList.add('armed');
+        timer = setTimeout(() => {
+          armed = false;
+          btn.textContent = label;
+          btn.classList.remove('armed');
+        }, 4000);
+        return;
+      }
+      clearTimeout(timer);
+      btn.disabled = true;
+      try {
+        await action();
+      } finally {
+        btn.disabled = false;
+      }
+    },
+  }, label);
+  return btn;
+}
+
 function formValues(form) {
   return Object.fromEntries(new FormData(form).entries());
 }
@@ -126,8 +157,16 @@ function wertLabel(klasse, wert) {
 
 // ---------- Navigation ----------
 
+function currentRoute() {
+  return location.hash.replace(/^#/, '') || '/';
+}
+
+function go(route) {
+  location.hash = `#${route}`;
+}
+
 function renderNav() {
-  const route = location.hash.replace(/^#/, '') || '/';
+  const route = currentRoute();
   const links = [['/', 'Start']];
   if (state.user) links.push(['/noten', 'Meine Noten']);
   if (state.jahrgang) links.push(['/hausaufgaben', 'Hausaufgaben'], ['/lehrplan', 'Lehrplan']);
@@ -150,7 +189,7 @@ const views = {
 };
 
 async function router() {
-  const route = location.hash.replace(/^#/, '') || '/';
+  const route = currentRoute();
   const view = views[route] || viewHome;
   renderNav();
   app.replaceChildren(h('p', { class: 'muted' }, 'Lädt …'));
@@ -159,7 +198,7 @@ async function router() {
   } catch (err) {
     if (err.status === 401) {
       await refreshMe();
-      location.hash = '#/';
+      go('/');
       return;
     }
     app.replaceChildren(h('div', { class: 'card' }, h('p', { class: 'error' }, err.message)));
@@ -185,7 +224,7 @@ function userCard() {
       h('p', {}, 'Angemeldet als ', h('strong', {}, state.user.email)),
       h('p', { class: 'muted small' }, 'Deine Noten sieht nur du.'),
       h('div', { class: 'row' },
-        h('button', { onclick: () => (location.hash = '#/noten') }, 'Zu meinen Noten'),
+        h('button', { onclick: () => (go('/noten')) }, 'Zu meinen Noten'),
         h('button', {
           class: 'secondary',
           onclick: async () => {
@@ -211,7 +250,7 @@ function userCard() {
         onsubmit: submitHandler(async (v) => {
           const res = await api(isLogin ? '/api/login' : '/api/register', { method: 'POST', body: v });
           state.user = res.user;
-          location.hash = '#/noten';
+          go('/noten');
         }),
       },
         h('label', {}, 'E-Mail', h('input', { name: 'email', type: 'email', required: true, autocomplete: 'email' })),
@@ -245,8 +284,8 @@ function jahrgangCard() {
       h('p', {}, 'Du bist als ', h('strong', {}, jg.name), ' im Jahrgangsbereich angemeldet.'),
       h('p', { class: 'muted small' }, 'Hausaufgabenheft, Lehrplan und Lernzusammenfassungen – gemeinsam für den ganzen Jahrgang.'),
       h('div', { class: 'row' },
-        h('button', { onclick: () => (location.hash = '#/hausaufgaben') }, 'Hausaufgaben'),
-        h('button', { onclick: () => (location.hash = '#/lehrplan') }, 'Lehrplan'),
+        h('button', { onclick: () => (go('/hausaufgaben')) }, 'Hausaufgaben'),
+        h('button', { onclick: () => (go('/lehrplan')) }, 'Lehrplan'),
         h('button', {
           class: 'secondary',
           onclick: async () => {
@@ -268,7 +307,7 @@ function jahrgangCard() {
       onsubmit: submitHandler(async (v) => {
         const res = await api('/api/jahrgang/login', { method: 'POST', body: v });
         state.jahrgang = res.jahrgang;
-        location.hash = '#/hausaufgaben';
+        go('/hausaufgaben');
       }),
     },
       h('label', {}, 'Klasse',
@@ -290,7 +329,7 @@ function jahrgangCard() {
 
 async function viewNoten() {
   if (!state.user) {
-    location.hash = '#/';
+    go('/');
     return;
   }
   const { grades } = await api('/api/grades');
@@ -387,16 +426,11 @@ async function viewNoten() {
           },
             h('strong', {}, wertLabel(klasse, g.wert)),
             h('span', { class: 'muted small' }, ARTEN[g.art]?.label.split(' ')[0]),
-            h('button', {
-              class: 'link',
-              'aria-label': 'Note löschen',
-              onclick: async () => {
-                if (!confirm('Diese Note löschen?')) return;
-                await api(`/api/grades/${g.id}`, { method: 'DELETE' });
-                grades.splice(grades.indexOf(g), 1);
-                draw();
-              },
-            }, '×'),
+            confirmButton('×', 'Löschen?', async () => {
+              await api(`/api/grades/${g.id}`, { method: 'DELETE' });
+              grades.splice(grades.indexOf(g), 1);
+              draw();
+            }, { 'aria-label': 'Note löschen' }),
           ))),
         ))),
       h('p', { class: 'muted small' },
@@ -404,15 +438,11 @@ async function viewNoten() {
           ? 'Jahrgangsstufe: 0–15 Punkte. Umrechnung Note ≈ (17 − Punkte) / 3. Das Gewicht legst du je Note fest (Standard: Klausur 2, sonst 1).'
           : 'Eingangsklasse: Noten 1–6 mit Tendenzen. Das Gewicht legst du je Note fest (Standard: Klassenarbeit 2, sonst 1).'),
       h('h2', {}, 'Konto'),
-      h('button', {
-        class: 'secondary',
-        onclick: async () => {
-          if (!confirm('Konto und alle Noten endgültig löschen?')) return;
-          await api('/api/account', { method: 'DELETE' });
-          state.user = null;
-          location.hash = '#/';
-        },
-      }, 'Konto löschen'),
+      confirmButton('Konto löschen', 'Wirklich alles endgültig löschen?', async () => {
+        await api('/api/account', { method: 'DELETE' });
+        state.user = null;
+        go('/');
+      }, { class: 'secondary' }),
     );
   };
   draw();
@@ -422,7 +452,7 @@ async function viewNoten() {
 
 async function viewHausaufgaben() {
   if (!state.jahrgang) {
-    location.hash = '#/';
+    go('/');
     return;
   }
   const items = await api('/api/homework');
@@ -504,15 +534,11 @@ async function viewHausaufgaben() {
               h('div', {}, i.aufgabe),
               h('div', { class: 'muted small' }, `eingetragen von ${i.autor}`),
             ),
-            i.eigene && h('button', {
-              class: 'link',
-              onclick: async () => {
-                if (!confirm('Eintrag für alle löschen?')) return;
-                await api(`/api/homework/${i.id}`, { method: 'DELETE' });
-                items.splice(items.indexOf(i), 1);
-                draw();
-              },
-            }, 'Löschen'),
+            i.eigene && confirmButton('Löschen', 'Für alle löschen?', async () => {
+              await api(`/api/homework/${i.id}`, { method: 'DELETE' });
+              items.splice(items.indexOf(i), 1);
+              draw();
+            }),
           );
         }))),
       h('p', { class: 'muted small' }, 'Der Haken „erledigt“ wird nur auf diesem Gerät gespeichert.'),
@@ -525,7 +551,7 @@ async function viewHausaufgaben() {
 
 async function viewLehrplan() {
   if (!state.jahrgang) {
-    location.hash = '#/';
+    go('/');
     return;
   }
   const plan = await api('/api/lehrplan');
@@ -563,15 +589,11 @@ function topicCard(t, nr) {
         ...notes.map((n) => h('div', { class: 'note' },
           h('div', { class: 'note-meta' },
             h('span', {}, `${n.autor} · ${new Date(n.createdAt).toLocaleDateString('de-DE')}`),
-            n.eigene && h('button', {
-              class: 'link',
-              onclick: async () => {
-                if (!confirm('Notiz löschen?')) return;
-                await api(`/api/notes/${n.id}`, { method: 'DELETE' });
-                notes.splice(notes.indexOf(n), 1);
-                drawList();
-              },
-            }, 'Löschen'),
+            n.eigene && confirmButton('Löschen', 'Wirklich löschen?', async () => {
+              await api(`/api/notes/${n.id}`, { method: 'DELETE' });
+              notes.splice(notes.indexOf(n), 1);
+              drawList();
+            }),
           ),
           n.text,
         )),
