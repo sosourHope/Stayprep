@@ -264,27 +264,27 @@ const previewCss = `
 .preview-bar strong { font-weight: 700; }
 .preview-bar code { font: 600 .85rem ui-monospace, SFMono-Regular, Menlo, monospace; }
 .preview-bar button { padding: 3px 10px; font-size: .8rem; background: var(--surface); color: var(--text); border: 1px solid var(--border); }
-body { background: var(--bg); color: var(--text); }
+body { background: var(--page); color: var(--text); }
 `;
 
 const html = `<title>StayPrep</title>
-<meta name="theme-color" content="#2f5d8a">
+<meta name="theme-color" content="#0b1f3a">
 <link rel="icon" href="${icon}" type="image/svg+xml">
 <style>
 ${css}
 ${previewCss}
 </style>
-<div class="preview-bar" role="note">
+<div class="preview-bar" role="note" lang="de">
   <span><strong>Vorschau</strong> · Daten bleiben nur in deinem Browser.</span>
   <span>Konto: <code>demo@schule.de</code> / <code>demo1234</code></span>
   <span>Jahrgangscodes: <code>demo11</code> <code>demo12</code> <code>demo13</code></span>
   <button type="button" id="reset-demo">Beispieldaten zurücksetzen</button>
 </div>
-<header class="topbar">
+<header class="topbar" lang="de">
   <a href="#/" class="brand" id="brand"><img src="${icon}" alt="" width="28" height="28"> StayPrep</a>
   <nav id="nav" class="nav"></nav>
 </header>
-<main id="app" class="container" aria-live="polite"></main>
+<main id="app" class="container" aria-live="polite" lang="de"></main>
 <script>
 ${demoApi}
 </script>
