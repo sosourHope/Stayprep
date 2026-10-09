@@ -18,8 +18,8 @@
   --danger: #b3261e;
   --ok: #2e7d4f;
   --warn: #a15c00;
-  --private-bg: #fdf0d5;
-  --private-fg: #7a5200;
+  --private-bg: #e6e9ee;  /* hellgrau */
+  --private-fg: #3b4658;
   --radius: 12px;
   color-scheme: light;
 }
@@ -179,7 +179,7 @@ button.link.armed { color: var(--danger); font-weight: 600; }
 .list li:first-child { border-top: 0; }
 .list .grow { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 
-.subject-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.subject-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; column-gap: 8px; }
 .avg { font-weight: 700; color: var(--primary); white-space: nowrap; }
 
 .grade-chip {
