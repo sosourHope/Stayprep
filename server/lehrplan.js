@@ -1,14 +1,14 @@
-// Lehrplan-Übersicht und Lernzusammenfassungen für das berufliche Gymnasium
-// in Baden-Württemberg (Eingangsklasse 11, Jahrgangsstufe 1 = Klasse 12,
-// Jahrgangsstufe 2 = Klasse 13). Orientiert an den Bildungsplänen des Landes;
-// Reihenfolge und Schwerpunkte können je nach Schule und Profil abweichen.
+// Lehrplan-Übersicht und Lernzusammenfassungen für das Berufliche Gymnasium
+// in Sachsen (Einführungsphase = Klassenstufe 11, Qualifikationsphase =
+// Jahrgangsstufen 12 und 13). Orientiert an den sächsischen Lehrplänen;
+// Reihenfolge und Schwerpunkte können je nach Schule und Fachrichtung abweichen.
 
 export const KLASSEN = [11, 12, 13];
 
 export const STUFEN = {
-  11: 'Eingangsklasse (Klasse 11)',
-  12: 'Jahrgangsstufe 1 (Klasse 12)',
-  13: 'Jahrgangsstufe 2 (Klasse 13)',
+  11: 'Einführungsphase (Klasse 11)',
+  12: 'Jahrgangsstufe 12',
+  13: 'Jahrgangsstufe 13',
 };
 
 const FAECHER = [
@@ -144,7 +144,7 @@ const FAECHER = [
           ],
         },
         {
-          titel: 'Matrizen und Wirtschaftsmathematik (v. a. WG-Profil)',
+          titel: 'Matrizen und Wirtschaftsmathematik (v. a. Fachrichtung Wirtschaftswissenschaft)',
           inhalte: ['Matrizenrechnung', 'Materialverflechtung', 'Leontief-Modell', 'Inverse'],
           zusammenfassung: [
             'Matrizenmultiplikation A·B nur, wenn Spaltenzahl von A = Zeilenzahl von B; Zeile mal Spalte.',
@@ -241,10 +241,10 @@ const FAECHER = [
           ],
         },
         {
-          titel: 'Pflichtlektüre und Werkinterpretation',
+          titel: 'Lektüre und Werkinterpretation',
           inhalte: ['Figurenkonstellation', 'Motive', 'Interpretationsaufsatz'],
           zusammenfassung: [
-            'Die Pflichtlektüren werden vom Kultusministerium für jeden Abiturjahrgang festgelegt – aktuelle Liste bei der Lehrkraft erfragen.',
+            'Welche Werke ihr lest und welche im Abitur eine Rolle spielen, legen Lehrplan und Schule fest – aktuelle Liste bei der Lehrkraft erfragen.',
             'Zu jedem Werk sichern: Inhalt pro Kapitel/Akt, Figurenkonstellation, zentrale Motive, Epoche, Schlüsselstellen mit Zitaten.',
             'Interpretationsaufsatz: Einleitung – Einordnung der Textstelle – Analyse von Inhalt, Sprache, Form – Deutung – Schluss mit Bezug zum Gesamtwerk.',
             'Werkvergleich: gemeinsamer Aspekt (z. B. Freiheit, Schuld, Identität) als Leitfrage.',
@@ -385,7 +385,7 @@ const FAECHER = [
           zusammenfassung: [
             'Operators: outline/describe (sachlich wiedergeben), analyse/examine (untersuchen), comment/assess/discuss (bewerten).',
             'Write a clear structure: introduction – main part in paragraphs – conclusion; use topic sentences.',
-            'Die Pflichtlektüre (vom Land festgelegt) gründlich vorbereiten: plot, characters, themes, key quotes.',
+            'Die im Kurs gelesenen Werke gründlich vorbereiten: plot, characters, themes, key quotes.',
             'Communication test/oral exam: express opinions, react to partner, use phrases like „I see your point, but …“.',
           ],
         },
@@ -393,20 +393,10 @@ const FAECHER = [
     },
   },
   {
-    id: 'ggk',
-    name: 'Geschichte mit Gemeinschaftskunde',
+    id: 'geschichte',
+    name: 'Geschichte',
     klassen: {
       11: [
-        {
-          titel: 'Politisches System der Bundesrepublik',
-          inhalte: ['Grundgesetz', 'Verfassungsorgane', 'Wahlen', 'Gewaltenteilung'],
-          zusammenfassung: [
-            'Grundgesetz (1949): Grundrechte (Art. 1–19), Art. 1 Menschenwürde; Art. 20: Demokratie, Rechtsstaat, Sozialstaat, Bundesstaat. Ewigkeitsklausel Art. 79 (3).',
-            'Verfassungsorgane: Bundestag (Gesetzgebung, wählt Kanzler), Bundesrat (Länder), Bundesregierung, Bundespräsident, Bundesverfassungsgericht.',
-            'Bundestagswahl: Erststimme (Wahlkreiskandidat), Zweitstimme (Partei, entscheidet Sitzverteilung); 5-%-Hürde.',
-            'Gewaltenteilung: Legislative, Exekutive, Judikative; zusätzlich vertikale Gewaltenteilung (Bund, Länder, Kommunen).',
-          ],
-        },
         {
           titel: 'Französische Revolution und Entstehung der Demokratie',
           inhalte: ['Ursachen', 'Menschenrechte', 'Verlauf'],
@@ -425,6 +415,18 @@ const FAECHER = [
             'Soziale Frage: Kinderarbeit, lange Arbeitszeiten, Wohnungselend, keine Absicherung.',
             'Lösungsansätze: Gewerkschaften, SPD, kirchliche Initiativen, Marx/Engels (Kommunistisches Manifest 1848).',
             'Bismarcks Sozialgesetze: Kranken- (1883), Unfall- (1884), Invaliditäts- und Altersversicherung (1889) – Grundlage des Sozialstaats.',
+          ],
+        },
+        {
+          titel: 'Deutsches Kaiserreich und Erster Weltkrieg',
+          inhalte: ['Reichsgründung', 'Imperialismus', 'Bündnissysteme', 'Versailler Vertrag'],
+          zusammenfassung: [
+            'Reichsgründung am 18.01.1871 in Versailles unter Bismarck: konstitutionelle Monarchie, Reichstag mit allgemeinem Wahlrecht für Männer.',
+            'Innenpolitik: Kulturkampf, Sozialistengesetz (1878), zugleich Sozialversicherungen als Antwort auf die soziale Frage.',
+            'Wilhelm II. (ab 1888): „Weltpolitik“, Flottenbau, Kolonien – Imperialismus verschärft die Spannungen in Europa.',
+            'Ursachen des Ersten Weltkriegs: Bündnissysteme (Dreibund gegen Entente), Wettrüsten, Nationalismus; Auslöser war das Attentat von Sarajevo (28.06.1914) und die Julikrise.',
+            'Verlauf: Stellungskrieg (z. B. Verdun 1916), 1917 Kriegseintritt der USA und Revolution in Russland, Waffenstillstand am 11.11.1918.',
+            'Versailler Vertrag (1919): Gebietsabtretungen, Reparationen, Kriegsschuldartikel 231 – Belastung für die Weimarer Republik.',
           ],
         },
       ],
@@ -450,21 +452,11 @@ const FAECHER = [
             'Widerstand: Weiße Rose, 20. Juli 1944 (Stauffenberg).',
           ],
         },
-        {
-          titel: 'Europäische Union',
-          inhalte: ['Entstehung', 'Organe', 'Aktuelle Herausforderungen'],
-          zusammenfassung: [
-            'Von der Montanunion (1951) über die EWG (1957, Römische Verträge) zur EU (Vertrag von Maastricht 1992, Lissabon 2009).',
-            'Organe: Europäisches Parlament, Rat der EU, Europäische Kommission, Europäischer Rat, EuGH, EZB.',
-            'Gesetzgebung: Kommission schlägt vor, Parlament und Rat beschließen (ordentliches Gesetzgebungsverfahren).',
-            'Herausforderungen: Brexit, Migration, Rechtsstaatlichkeit, Klimaschutz, Erweiterung.',
-          ],
-        },
       ],
       13: [
         {
           titel: 'Deutschland nach 1945 und der Kalte Krieg',
-          inhalte: ['Besatzungszeit', 'Teilung', 'DDR', 'Wiedervereinigung'],
+          inhalte: ['Besatzungszeit', 'Teilung', 'DDR', 'Ostpolitik'],
           zusammenfassung: [
             'Potsdamer Konferenz 1945: Entnazifizierung, Entmilitarisierung, Demokratisierung, Dezentralisierung; vier Besatzungszonen.',
             'Kalter Krieg: Truman-Doktrin, Marshallplan, Berlin-Blockade 1948/49 → Gründung von BRD und DDR 1949.',
@@ -473,13 +465,68 @@ const FAECHER = [
           ],
         },
         {
-          titel: 'Internationale Politik und Friedenssicherung',
-          inhalte: ['UNO', 'NATO', 'Konflikte'],
+          titel: 'Friedliche Revolution 1989 und Deutsche Einheit',
+          inhalte: ['Ursachen', 'Montagsdemonstrationen', 'Mauerfall', 'Einigungsprozess'],
           zusammenfassung: [
-            'UNO (1945): Generalversammlung, Sicherheitsrat mit 5 ständigen Mitgliedern mit Vetorecht (USA, Russland, China, Frankreich, Großbritannien).',
-            'NATO (1949): Verteidigungsbündnis, Art. 5 Beistandspflicht.',
-            'Konfliktanalyse: Akteure, Ursachen, Interessen, Lösungsansätze (Diplomatie, Sanktionen, Blauhelm-Einsätze).',
-            'Erweiterter Sicherheitsbegriff: Terrorismus, Cyberangriffe, Klimawandel, Migration.',
+            'Ursachen: Wirtschaftskrise und Mangel in der DDR, fehlende Reise- und Meinungsfreiheit, gefälschte Kommunalwahl im Mai 1989, Reformkurs Gorbatschows (Glasnost, Perestroika).',
+            'Sommer 1989: Ausreisewelle über Ungarn und Botschaftsbesetzungen, z. B. in Prag.',
+            'Sachsen im Mittelpunkt: Friedensgebete in der Leipziger Nikolaikirche; große Demonstrationen in Plauen (7. Oktober) und Dresden. Die Leipziger Montagsdemonstration am 9. Oktober 1989 mit rund 70.000 Menschen blieb gewaltfrei – der Wendepunkt („Wir sind das Volk!“).',
+            'Mauerfall am 9. November 1989; Runder Tisch; erste freie Volkskammerwahl am 18. März 1990.',
+            'Weg zur Einheit: Wirtschafts-, Währungs- und Sozialunion (1. Juli 1990), Zwei-plus-Vier-Vertrag, Beitritt am 3. Oktober 1990. Die ostdeutschen Länder, darunter der Freistaat Sachsen, wurden 1990 wiedergegründet.',
+            'Folgen: Umbau der Wirtschaft (Treuhandanstalt), Arbeitslosigkeit und Abwanderung, aber auch Freiheit, Demokratie und Erneuerung der Städte.',
+          ],
+        },
+      ],
+    },
+  },
+  {
+    id: 'gk',
+    name: 'Gemeinschaftskunde/Rechtserziehung',
+    klassen: {
+      11: [
+        {
+          titel: 'Politisches System der Bundesrepublik',
+          inhalte: ['Grundgesetz', 'Verfassungsorgane', 'Wahlen', 'Gewaltenteilung'],
+          zusammenfassung: [
+            'Grundgesetz (1949): Grundrechte (Art. 1–19), Art. 1 Menschenwürde; Art. 20: Demokratie, Rechtsstaat, Sozialstaat, Bundesstaat. Ewigkeitsklausel Art. 79 (3).',
+            'Verfassungsorgane: Bundestag (Gesetzgebung, wählt Kanzler), Bundesrat (Länder), Bundesregierung, Bundespräsident, Bundesverfassungsgericht.',
+            'Bundestagswahl: Erststimme (Wahlkreiskandidat), Zweitstimme (Partei, entscheidet Sitzverteilung); 5-%-Hürde.',
+            'Gewaltenteilung: Legislative, Exekutive, Judikative; zusätzlich vertikale Gewaltenteilung (Bund, Länder, Kommunen).',
+          ],
+        },
+        {
+          titel: 'Der Freistaat Sachsen und die Kommunen',
+          inhalte: ['Sächsische Verfassung', 'Landtag', 'Staatsregierung', 'Kommunale Selbstverwaltung'],
+          zusammenfassung: [
+            'Sachsen ist ein Land der Bundesrepublik (Föderalismus); die Sächsische Verfassung stammt von 1992.',
+            'Der Sächsische Landtag in Dresden wird alle fünf Jahre gewählt, beschließt Landesgesetze (z. B. Schulgesetz) und wählt den Ministerpräsidenten.',
+            'Die Staatsregierung (Ministerpräsident und Staatsminister) führt die Landespolitik und die Verwaltung.',
+            'Länder sind u. a. zuständig für Bildung, Polizei und Kultur; über den Bundesrat wirken sie an Bundesgesetzen mit.',
+            'Kommunen: 10 Landkreise und 3 kreisfreie Städte (Dresden, Leipzig, Chemnitz). Gemeinderat und Bürgermeister regeln örtliche Angelegenheiten (kommunale Selbstverwaltung).',
+          ],
+        },
+        {
+          titel: 'Recht und Rechtsordnung',
+          inhalte: ['Funktionen des Rechts', 'Rechtsgebiete', 'Geschäfts- und Strafmündigkeit', 'Gerichte'],
+          zusammenfassung: [
+            'Recht schafft Ordnung und Frieden, schützt Schwächere und soll Gerechtigkeit herstellen.',
+            'Öffentliches Recht (Staat ↔ Bürger, z. B. Verwaltungs- und Strafrecht) und Privatrecht (Bürger ↔ Bürger, z. B. Kaufvertrag, BGB).',
+            'Rechtsfähigkeit ab Geburt; Geschäftsfähigkeit: unter 7 Jahren geschäftsunfähig, 7–17 beschränkt, ab 18 voll.',
+            'Strafmündig ab 14 Jahren; für Jugendliche (14–17) gilt das Jugendstrafrecht, bei Heranwachsenden (18–20) kann es angewendet werden. Ziel ist vor allem Erziehung.',
+            'Gerichtsbarkeiten: ordentliche Gerichte (Zivil- und Strafsachen), Arbeits-, Verwaltungs-, Sozial- und Finanzgerichte; darüber das Bundesverfassungsgericht.',
+            'Rechtsstaat: Gewaltenteilung, Bindung der Verwaltung an Gesetze, unabhängige Gerichte, „keine Strafe ohne Gesetz“ (Art. 103 Abs. 2 GG).',
+          ],
+        },
+      ],
+      12: [
+        {
+          titel: 'Europäische Union',
+          inhalte: ['Entstehung', 'Organe', 'Aktuelle Herausforderungen'],
+          zusammenfassung: [
+            'Von der Montanunion (1951) über die EWG (1957, Römische Verträge) zur EU (Vertrag von Maastricht 1992, Lissabon 2009).',
+            'Organe: Europäisches Parlament, Rat der EU, Europäische Kommission, Europäischer Rat, EuGH, EZB.',
+            'Gesetzgebung: Kommission schlägt vor, Parlament und Rat beschließen (ordentliches Gesetzgebungsverfahren).',
+            'Herausforderungen: Brexit, Migration, Rechtsstaatlichkeit, Klimaschutz, Erweiterung.',
           ],
         },
         {
@@ -493,11 +540,34 @@ const FAECHER = [
           ],
         },
       ],
+      13: [
+        {
+          titel: 'Internationale Politik und Friedenssicherung',
+          inhalte: ['UNO', 'NATO', 'Konflikte'],
+          zusammenfassung: [
+            'UNO (1945): Generalversammlung, Sicherheitsrat mit 5 ständigen Mitgliedern mit Vetorecht (USA, Russland, China, Frankreich, Großbritannien).',
+            'NATO (1949): Verteidigungsbündnis, Art. 5 Beistandspflicht.',
+            'Konfliktanalyse: Akteure, Ursachen, Interessen, Lösungsansätze (Diplomatie, Sanktionen, Blauhelm-Einsätze).',
+            'Erweiterter Sicherheitsbegriff: Terrorismus, Cyberangriffe, Klimawandel, Migration.',
+          ],
+        },
+        {
+          titel: 'Globalisierung',
+          inhalte: ['Ursachen', 'Akteure', 'Chancen und Risiken', 'Global Governance'],
+          zusammenfassung: [
+            'Globalisierung = weltweite Verflechtung von Wirtschaft, Politik, Kultur und Kommunikation.',
+            'Ursachen: sinkende Transport- und Kommunikationskosten, Digitalisierung, Abbau von Handelsschranken (WTO).',
+            'Akteure: Staaten, multinationale Unternehmen, internationale Organisationen (WTO, IWF, Weltbank) und Nichtregierungsorganisationen.',
+            'Chancen: Wachstum, günstigere Produkte, Austausch. Risiken: Standortkonkurrenz, Abhängigkeit von Lieferketten, ungleiche Verteilung, Umweltbelastung.',
+            'Global Governance: Zusammenarbeit z. B. in G7/G20 und über die UN-Nachhaltigkeitsziele (Agenda 2030 mit 17 Zielen).',
+          ],
+        },
+      ],
     },
   },
   {
     id: 'vbl',
-    name: 'Volks- und Betriebswirtschaftslehre (WG)',
+    name: 'Volks- und Betriebswirtschaftslehre (Wirtschaftswissenschaft)',
     klassen: {
       11: [
         {
@@ -633,7 +703,7 @@ const FAECHER = [
   },
   {
     id: 'informatik',
-    name: 'Informatik / Informationstechnik (TG)',
+    name: 'Informatiksysteme (Informations- und Kommunikationstechnologie)',
     klassen: {
       11: [
         {

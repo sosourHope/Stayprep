@@ -1,6 +1,6 @@
 # StayPrep
 
-Schul-App für das **berufliche Gymnasium in Baden-Württemberg (Klasse 11–13)**.
+Schul-App für das **Berufliche Gymnasium in Sachsen (Klasse 11–13)**.
 
 | Bereich | Zugang | Wer sieht es? |
 |---|---|---|
@@ -12,22 +12,22 @@ Schul-App für das **berufliche Gymnasium in Baden-Württemberg (Klasse 11–13)
 
 - **Private Notenverwaltung**
   - **Passwort vergessen?** Link per E-Mail (60 Minuten gültig) zum Festlegen eines neuen Passworts
-  - Klasse 11 (Eingangsklasse): Noten 1–6 mit Tendenzen (1-, 2+, …)
-  - Klasse 12/13 (Jahrgangsstufe 1/2): 0–15 Punkte, Umrechnung in Noten
-  - Art der Note (Klausur, Test, mündlich, GFS …) und Gewichtung, Fach- und Gesamtdurchschnitt
+  - Klasse 11 (Einführungsphase): Noten 1–6 mit Tendenzen (1-, 2+, …)
+  - Jahrgangsstufen 12/13 (Qualifikationsphase): 0–15 Punkte, Umrechnung in Noten
+  - Art der Note (Klausur, Test, mündlich, Präsentation/Komplexe Leistung …) und Gewichtung, Fach- und Gesamtdurchschnitt
   - Konto kann samt aller Daten gelöscht werden
 - **Hausaufgabenheft pro Jahrgang**
   - Jede*r im Jahrgang kann Aufgaben eintragen; alle sehen sie
   - Löschen darf nur, wer den Eintrag erstellt hat
   - „Erledigt“-Haken werden persönlich auf dem eigenen Gerät gespeichert
 - **Lehrplan pro Jahrgang** mit Lernzusammenfassung zu jedem Thema
-  - Fächer: Mathematik, Deutsch, Englisch, Geschichte mit Gemeinschaftskunde, VBL (WG), Informatik/Informationstechnik (TG), Physik, Chemie, Biologie
+  - Fächer: Mathematik, Deutsch, Englisch, Geschichte, Gemeinschaftskunde/Rechtserziehung, Volks- und Betriebswirtschaftslehre (Fachrichtung Wirtschaftswissenschaft), Informatiksysteme (Fachrichtung Informations- und Kommunikationstechnologie), Physik, Chemie, Biologie
   - Unter jedem Thema kann der Jahrgang eigene Notizen teilen (Eselsbrücken, Beispiele …)
   - Beim Öffnen eines Themas erscheint rechts ein Feld für **eigene Notizen** (mit Konto privat im Konto gespeichert, sonst auf dem Gerät)
   - **In Word öffnen**: Nach einer Erlaubnis-Abfrage wird aus Zusammenfassung und Notizen ein Word-Dokument (.docx) erstellt und übergeben
 
-Die Inhalte orientieren sich an den Bildungsplänen des beruflichen Gymnasiums in
-Baden-Württemberg. Reihenfolge und Schwerpunkte können je nach Schule und Profil abweichen.
+Die Inhalte orientieren sich an den sächsischen Lehrplänen für das Berufliche Gymnasium.
+Reihenfolge und Schwerpunkte können je nach Schule und Fachrichtung abweichen.
 Die Inhalte liegen in `server/lehrplan.js` und lassen sich dort leicht anpassen oder erweitern.
 
 ## Starten

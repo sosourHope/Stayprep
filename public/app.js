@@ -7,16 +7,16 @@ const nav = document.getElementById('nav');
 const state = { user: null, jahrgang: null };
 
 const FAECHER = [
-  'Deutsch', 'Mathematik', 'Englisch', 'Geschichte mit Gemeinschaftskunde', 'Religion / Ethik', 'Sport',
-  'Physik', 'Chemie', 'Biologie', 'Informatik', 'Volks- und Betriebswirtschaftslehre', 'Wirtschaftslehre',
-  'Französisch', 'Spanisch', 'Profilfach', 'Computertechnik',
+  'Deutsch', 'Mathematik', 'Englisch', 'Geschichte', 'Gemeinschaftskunde/Rechtserziehung', 'Ethik', 'Religion', 'Sport',
+  'Physik', 'Chemie', 'Biologie', 'Informatik', 'Informatiksysteme', 'Volks- und Betriebswirtschaftslehre',
+  'Wirtschaftslehre/Recht', 'Französisch', 'Spanisch', 'Russisch', 'Fachrichtungsfach',
 ];
 
 const ARTEN = {
   klausur: { label: 'Klassenarbeit / Klausur', gewicht: 2 },
   test: { label: 'Test', gewicht: 1 },
   muendlich: { label: 'Mündlich', gewicht: 1 },
-  gfs: { label: 'GFS / Präsentation', gewicht: 1 },
+  gfs: { label: 'Präsentation / Komplexe Leistung', gewicht: 1 },
   sonstiges: { label: 'Sonstiges', gewicht: 1 },
 };
 
@@ -375,9 +375,9 @@ function jahrgangCard() {
     },
       h('label', {}, 'Klasse',
         h('select', { name: 'klasse', required: true },
-          h('option', { value: '11' }, 'Klasse 11 – Eingangsklasse'),
-          h('option', { value: '12' }, 'Klasse 12 – Jahrgangsstufe 1'),
-          h('option', { value: '13' }, 'Klasse 13 – Jahrgangsstufe 2'),
+          h('option', { value: '11' }, 'Klasse 11 – Einführungsphase'),
+          h('option', { value: '12' }, 'Jahrgangsstufe 12'),
+          h('option', { value: '13' }, 'Jahrgangsstufe 13'),
         ),
       ),
       h('label', {}, 'Dein Name (für andere sichtbar)', h('input', { name: 'name', required: true, minLength: 2, maxLength: 40, autocomplete: 'nickname' })),
@@ -499,7 +499,7 @@ async function viewNoten() {
       h('p', { class: 'muted small' },
         isPunkte
           ? 'Jahrgangsstufe: 0–15 Punkte. Umrechnung Note ≈ (17 − Punkte) / 3. Das Gewicht legst du je Note fest (Standard: Klausur 2, sonst 1).'
-          : 'Eingangsklasse: Noten 1–6 mit Tendenzen. Das Gewicht legst du je Note fest (Standard: Klassenarbeit 2, sonst 1).'),
+          : 'Einführungsphase: Noten 1–6 mit Tendenzen. Das Gewicht legst du je Note fest (Standard: Klassenarbeit 2, sonst 1).'),
       h('h2', {}, 'Konto'),
       confirmButton('Konto löschen', 'Wirklich alles endgültig löschen?', async () => {
         await api('/api/account', { method: 'DELETE' });
@@ -641,9 +641,9 @@ async function viewLehrplan() {
 
   app.replaceChildren(
     h('h1', {}, 'Lehrplan & Lernzusammenfassungen'),
-    h('p', { class: 'sub' }, h('span', { class: 'badge' }, plan.stufe), ' Berufliches Gymnasium Baden-Württemberg'),
+    h('p', { class: 'sub' }, h('span', { class: 'badge' }, plan.stufe), ' Berufliches Gymnasium Sachsen'),
     h('div', { class: 'hint' },
-      'Die Übersicht orientiert sich an den Bildungsplänen des beruflichen Gymnasiums. Reihenfolge und Schwerpunkte können je nach Schule und Profil abweichen – im Zweifel gilt, was deine Lehrkraft sagt. Wenn du ein Thema öffnest, erscheint rechts ein Feld für deine eigenen Notizen.'),
+      'Die Übersicht orientiert sich an den sächsischen Lehrplänen für das Berufliche Gymnasium. Reihenfolge und Schwerpunkte können je nach Schule und Fachrichtung abweichen – im Zweifel gilt, was deine Lehrkraft sagt. Wenn du ein Thema öffnest, erscheint rechts ein Feld für deine eigenen Notizen.'),
     layout,
   );
   draw();

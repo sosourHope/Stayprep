@@ -38,7 +38,7 @@ const demoApi = `
   const LEHRPLAN = ${JSON.stringify(lehrplan)};
   const CODES = { 11: 'demo11', 12: 'demo12', 13: 'demo13' };
   const SALT = ${JSON.stringify(demoSalt)};
-  const KEY = 'stayprep-vorschau-v1';
+  const KEY = 'stayprep-vorschau-v2';
   const ARTEN = { klausur: 2, test: 1, muendlich: 1, gfs: 1, sonstiges: 1 };
 
   const uid = () => (crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2));
@@ -67,11 +67,11 @@ const demoApi = `
         g(12, 'Mathematik', 'klausur', 13, 20, 'Kurvendiskussion'),
         g(12, 'Mathematik', 'muendlich', 11, 5),
         g(12, 'Deutsch', 'klausur', 10, 14, 'Lyrikanalyse'),
-        g(12, 'Deutsch', 'gfs', 13, 30, 'GFS Romantik'),
+        g(12, 'Deutsch', 'gfs', 13, 30, 'Präsentation Romantik'),
         g(12, 'Englisch', 'klausur', 9, 18),
         g(12, 'Englisch', 'test', 11, 6),
         g(12, 'Volks- und Betriebswirtschaftslehre', 'klausur', 14, 10),
-        g(12, 'Geschichte mit Gemeinschaftskunde', 'muendlich', 12, 8),
+        g(12, 'Gemeinschaftskunde/Rechtserziehung', 'muendlich', 12, 8),
         g(11, 'Mathematik', 'klausur', 2, 200),
         g(11, 'Deutsch', 'klausur', 2.25, 190),
         g(11, 'Englisch', 'muendlich', 1.75, 180),
@@ -120,7 +120,7 @@ const demoApi = `
     if (s.length < min || s.length > max) fail(400, name + ' muss ' + min + '–' + max + ' Zeichen lang sein.');
     return s;
   };
-  const STUFEN = { 11: 'Eingangsklasse (Klasse 11)', 12: 'Jahrgangsstufe 1 (Klasse 12)', 13: 'Jahrgangsstufe 2 (Klasse 13)' };
+  const STUFEN = { 11: 'Einführungsphase (Klasse 11)', 12: 'Jahrgangsstufe 12', 13: 'Jahrgangsstufe 13' };
   const user = () => { const d = load(); const u = d.users.find((x) => x.id === d.userSession); if (!u) fail(401, 'Bitte melde dich an.'); return u; };
   const jg = () => { const d = load(); if (!d.jg) fail(401, 'Bitte melde dich im Jahrgangsbereich an.'); return d.jg; };
   const topicExists = (k, id) => LEHRPLAN[k].faecher.some((f) => f.themen.some((t) => t.id === id));

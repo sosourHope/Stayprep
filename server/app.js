@@ -13,7 +13,7 @@ const ARTEN = {
   klausur: { label: 'Klassenarbeit / Klausur', gewicht: 2 },
   test: { label: 'Test', gewicht: 1 },
   muendlich: { label: 'Mündlich', gewicht: 1 },
-  gfs: { label: 'GFS / Präsentation', gewicht: 1 },
+  gfs: { label: 'Präsentation / Komplexe Leistung', gewicht: 1 },
   sonstiges: { label: 'Sonstiges', gewicht: 1 },
 };
 
