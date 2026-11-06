@@ -22,6 +22,8 @@ Schul-App für das **berufliche Gymnasium in Baden-Württemberg (Klasse 11–13)
 - **Lehrplan pro Jahrgang** mit Lernzusammenfassung zu jedem Thema
   - Fächer: Mathematik, Deutsch, Englisch, Geschichte mit Gemeinschaftskunde, VBL (WG), Informatik/Informationstechnik (TG), Physik, Chemie, Biologie
   - Unter jedem Thema kann der Jahrgang eigene Notizen teilen (Eselsbrücken, Beispiele …)
+  - Beim Öffnen eines Themas erscheint rechts ein Feld für **eigene Notizen** (mit Konto privat im Konto gespeichert, sonst auf dem Gerät)
+  - **In Word öffnen**: Nach einer Erlaubnis-Abfrage wird aus Zusammenfassung und Notizen ein Word-Dokument (.docx) erstellt und übergeben
 
 Die Inhalte orientieren sich an den Bildungsplänen des beruflichen Gymnasiums in
 Baden-Württemberg. Reihenfolge und Schwerpunkte können je nach Schule und Profil abweichen.

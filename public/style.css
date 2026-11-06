@@ -1,23 +1,23 @@
-/* Ein festes Farbschema: Marineblauer Grund, weißer Inhaltskasten,
-   weiße Kopfzeile, Bedienelemente in hellem Mint. */
+/* Ein festes Farbschema: weißer Hintergrund, schwarze Schrift,
+   beige Akzente für Bedienelemente, Abzeichen und Hinweise. */
 :root {
-  --page: #0b1f3a;        /* dunkles Marineblau (Seitenhintergrund) */
-  --surface: #ffffff;     /* weißer Inhaltskasten, Kopfzeile, Karten */
-  --inset: #f4f7fb;       /* leicht abgesetzte Flächen im Kasten */
-  --text: #13243f;
-  --muted: #56667e;
-  --border: #dde4ee;
-  --primary: #0b1f3a;     /* Marine für Akzente im Text */
-  --primary-soft: #e6ecf5;
-  --mint: #d9f4e9;        /* Bedienelemente */
-  --mint-strong: #b2e6d1; /* aktiv / Hover */
-  --mint-field: #f0fbf6;  /* Eingabefelder */
-  --mint-border: #9ed8c0;
-  --on-mint: #0b1f3a;
-  --accent: #f2b134;
+  --page: #ffffff;        /* Seitenhintergrund */
+  --surface: #ffffff;     /* Kopfzeile, Karten */
+  --inset: #faf6ef;       /* leicht abgesetzte Flächen */
+  --text: #111111;        /* schwarze Schrift */
+  --muted: #4f4a42;
+  --border: #e8dfcf;
+  --primary: #111111;
+  --primary-soft: #f4ede1; /* Abzeichen, Hinweise */
+  --ctrl: #efe5d3;        /* Bedienelemente (beige) */
+  --ctrl-strong: #e1cfae; /* aktiv / Hover */
+  --ctrl-field: #fdfbf7;  /* Eingabefelder */
+  --ctrl-border: #d4bf98;
+  --on-ctrl: #111111;
+  --accent: #b08d57;      /* kräftigeres Beige für Linien und Marker */
   --danger: #b3261e;
   --ok: #2e7d4f;
-  --warn: #a15c00;
+  --warn: #9a5800;
   --private-bg: #e6e9ee;  /* hellgrau */
   --private-fg: #3b4658;
   --radius: 12px;
@@ -25,6 +25,7 @@
 }
 
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 
 body {
   margin: 0;
@@ -41,8 +42,7 @@ body {
   gap: 8px;
   padding: 10px 16px;
   background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  box-shadow: 0 2px 10px rgb(0 0 0 / .18);
+  border-bottom: 2px solid var(--ctrl-strong);
   position: sticky;
   top: env(safe-area-inset-top, 0px);
   z-index: 10;
@@ -62,22 +62,20 @@ body {
 .nav a {
   padding: 6px 12px;
   border-radius: 999px;
-  border: 1px solid var(--mint-border);
-  background: var(--mint);
-  color: var(--on-mint);
+  border: 1px solid var(--ctrl-border);
+  background: var(--ctrl);
+  color: var(--on-ctrl);
   text-decoration: none;
   font-weight: 500;
 }
-.nav a:hover { background: var(--mint-strong); }
-.nav a.active { background: var(--mint-strong); font-weight: 700; }
+.nav a:hover { background: var(--ctrl-strong); }
+.nav a.active { background: var(--ctrl-strong); font-weight: 700; }
 
 .container {
-  width: min(960px, calc(100% - 32px));
+  width: min(1200px, calc(100% - 32px));
   margin: 20px auto 40px;
-  padding: 24px 20px 32px;
+  padding-block: 24px 40px;
   background: var(--surface);
-  border-radius: 16px;
-  box-shadow: 0 10px 30px rgb(0 0 0 / .25);
 }
 
 h1 { font-size: clamp(1.35rem, 5.5vw, 1.6rem); margin: 0 0 4px; }
@@ -123,25 +121,25 @@ input, select, textarea {
   padding: 9px 11px;
   border: 1px solid var(--border);
   border-radius: 8px;
-  border-color: var(--mint-border);
-  background: var(--mint-field);
+  border-color: var(--ctrl-border);
+  background: var(--ctrl-field);
 }
 textarea { min-height: 80px; resize: vertical; }
 input:focus, select:focus, textarea:focus { outline: 2px solid var(--primary); outline-offset: 1px; }
 
 button {
   padding: 9px 16px;
-  border: 1px solid var(--mint-border);
+  border: 1px solid var(--ctrl-border);
   border-radius: 8px;
-  background: var(--mint);
-  color: var(--on-mint);
+  background: var(--ctrl);
+  color: var(--on-ctrl);
   font-weight: 600;
   cursor: pointer;
 }
-button:hover:not(:disabled) { background: var(--mint-strong); }
-button[type="submit"] { background: var(--mint-strong); font-weight: 700; }
-button[type="submit"]:hover:not(:disabled) { background: var(--mint-border); }
-button.secondary { background: var(--mint); }
+button:hover:not(:disabled) { background: var(--ctrl-strong); }
+button[type="submit"] { background: var(--ctrl-strong); font-weight: 700; }
+button[type="submit"]:hover:not(:disabled) { background: var(--ctrl-border); }
+button.secondary { background: var(--ctrl); }
 button:focus-visible, .nav a:focus-visible, summary:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 button.link,
 button.link:hover:not(:disabled) {
@@ -159,8 +157,8 @@ button:disabled { opacity: .6; cursor: default; }
 .small { font-size: .85rem; }
 
 .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
-.tabs button { background: var(--mint); color: var(--on-mint); }
-.tabs button.active { background: var(--mint-strong); font-weight: 700; box-shadow: inset 0 -3px 0 var(--primary); }
+.tabs button { background: var(--ctrl); color: var(--on-ctrl); }
+.tabs button.active { background: var(--ctrl-strong); font-weight: 700; box-shadow: inset 0 -3px 0 var(--accent); }
 button.link.armed { color: var(--danger); font-weight: 600; }
 
 .stats { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); margin-bottom: 16px; }
@@ -214,7 +212,7 @@ details.topic > summary {
   list-style: none;
 }
 details.topic > summary::-webkit-details-marker { display: none; }
-details.topic > summary::before { content: "▸ "; color: var(--primary); }
+details.topic > summary::before { content: "▸ "; color: var(--accent); }
 details.topic[open] > summary::before { content: "▾ "; }
 details.topic .body { padding: 0 18px 16px; }
 .keywords { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
@@ -226,6 +224,7 @@ details.topic .body { padding: 0 18px 16px; }
 
 .hint {
   background: var(--primary-soft);
+  border-left: 4px solid var(--accent);
   border-radius: var(--radius);
   padding: 12px 14px;
   font-size: .9rem;
@@ -235,3 +234,68 @@ details.topic .body { padding: 0 18px 16px; }
 .toolbar { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
 .inline { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: .9rem; }
 .inline input { width: auto; }
+
+/* ---------- Lehrplan mit Notizfeld rechts ---------- */
+
+.lp-layout { display: grid; gap: 20px; align-items: start; }
+.lp-main { min-width: 0; }
+.topic-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+.topic-head h3 { margin: 0; }
+.small-btn { padding: 5px 10px; font-size: .85rem; }
+
+.notepad {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--inset);
+  border: 1px solid var(--ctrl-border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+.notepad-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.notepad-head .link { font-size: 1.1rem; }
+.eyebrow { display: block; font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+.notepad-title { margin: 2px 0 0; }
+.notepad-where { margin: 0; }
+.notepad-text { flex: 1; min-height: 260px; background: var(--surface); line-height: 1.55; }
+.notepad-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+.consent {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  background: var(--surface);
+  border: 2px solid var(--accent);
+  border-radius: 10px;
+}
+.consent p { margin: 0; }
+.consent-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+@media (min-width: 900px) {
+  .lp-layout.has-notes { grid-template-columns: minmax(0, 1fr) minmax(300px, 380px); }
+  .notepad {
+    position: sticky;
+    top: calc(env(safe-area-inset-top, 0px) + 80px);
+    max-height: calc(100vh - 100px);
+    overflow-y: auto;
+  }
+}
+
+/* Auf schmalen Bildschirmen öffnet sich das Notizfeld als Leiste am unteren Rand. */
+@media (max-width: 899px) {
+  .notepad {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 20;
+    max-height: 60vh;
+    overflow-y: auto;
+    border-radius: 16px 16px 0 0;
+    border-bottom: 0;
+    padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    box-shadow: 0 -6px 20px rgb(0 0 0 / .12);
+  }
+  .notepad-text { min-height: 140px; }
+  .lp-layout.has-notes { padding-bottom: 62vh; }
+}

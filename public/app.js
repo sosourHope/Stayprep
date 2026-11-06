@@ -558,25 +558,35 @@ async function viewLehrplan() {
   let fachId = store(`lp-fach-${plan.klasse}`);
   if (!plan.faecher.some((f) => f.id === fachId)) fachId = plan.faecher[0]?.id;
 
+  const layout = h('div', { class: 'lp-layout' });
+  const notepad = createNotepad(layout);
+
   const draw = () => {
     store(`lp-fach-${plan.klasse}`, fachId);
     const fach = plan.faecher.find((f) => f.id === fachId);
-    app.replaceChildren(
-      h('h1', {}, 'Lehrplan & Lernzusammenfassungen'),
-      h('p', { class: 'sub' }, h('span', { class: 'badge' }, plan.stufe), ' Berufliches Gymnasium Baden-Württemberg'),
-      h('div', { class: 'hint' },
-        'Die Übersicht orientiert sich an den Bildungsplänen des beruflichen Gymnasiums. Reihenfolge und Schwerpunkte können je nach Schule und Profil abweichen – im Zweifel gilt, was deine Lehrkraft sagt. Unter jedem Thema könnt ihr eigene Notizen für den Jahrgang ergänzen.'),
-      h('div', { class: 'tabs' }, ...plan.faecher.map((f) => h('button', {
-        class: f.id === fachId ? 'active' : '',
-        onclick: () => { fachId = f.id; draw(); },
-      }, f.name))),
-      fach && h('div', {}, ...fach.themen.map((t, idx) => topicCard(t, idx + 1))),
+    layout.replaceChildren(
+      h('div', { class: 'lp-main' },
+        h('div', { class: 'tabs' }, ...plan.faecher.map((f) => h('button', {
+          class: f.id === fachId ? 'active' : '',
+          onclick: () => { fachId = f.id; draw(); },
+        }, f.name))),
+        fach && h('div', {}, ...fach.themen.map((t, idx) => topicCard(t, idx + 1, () => notepad.open(t, fach.name, plan.stufe)))),
+      ),
+      notepad.panel,
     );
   };
+
+  app.replaceChildren(
+    h('h1', {}, 'Lehrplan & Lernzusammenfassungen'),
+    h('p', { class: 'sub' }, h('span', { class: 'badge' }, plan.stufe), ' Berufliches Gymnasium Baden-Württemberg'),
+    h('div', { class: 'hint' },
+      'Die Übersicht orientiert sich an den Bildungsplänen des beruflichen Gymnasiums. Reihenfolge und Schwerpunkte können je nach Schule und Profil abweichen – im Zweifel gilt, was deine Lehrkraft sagt. Wenn du ein Thema öffnest, erscheint rechts ein Feld für deine eigenen Notizen.'),
+    layout,
+  );
   draw();
 }
 
-function topicCard(t, nr) {
+function topicCard(t, nr, openNotes) {
   const notesBox = h('div', { class: 'notes' });
   let loaded = false;
 
@@ -613,7 +623,7 @@ function topicCard(t, nr) {
       },
         h('textarea', { name: 'text', required: true, maxLength: 3000, placeholder: 'Eselsbrücke, Beispielaufgabe, Ergänzung …' }),
         h('p', { class: 'error' }),
-        h('button', { type: 'submit', class: 'secondary' }, 'Notiz teilen'),
+        h('button', { type: 'submit', class: 'secondary' }, 'Mit dem Jahrgang teilen'),
       ),
     );
   };
@@ -621,7 +631,9 @@ function topicCard(t, nr) {
   return h('details', {
     class: 'topic',
     ontoggle: (e) => {
-      if (e.target.open && !loaded) {
+      if (!e.target.open) return;
+      openNotes();
+      if (!loaded) {
         loaded = true;
         loadNotes().catch((err) => notesBox.replaceChildren(h('p', { class: 'error' }, err.message)));
       }
@@ -630,11 +642,275 @@ function topicCard(t, nr) {
     h('summary', {}, `${nr}. ${t.titel}`),
     h('div', { class: 'body' },
       h('div', { class: 'keywords' }, ...t.inhalte.map((k) => h('span', { class: 'badge' }, k))),
-      h('h3', {}, 'Lernzusammenfassung'),
+      h('div', { class: 'topic-head' },
+        h('h3', {}, 'Lernzusammenfassung'),
+        h('button', { type: 'button', class: 'secondary small-btn', onclick: openNotes }, 'Eigene Notizen'),
+      ),
       h('ul', { class: 'summary-list' }, ...t.zusammenfassung.map((s) => h('li', {}, s))),
       notesBox,
     ),
   );
+}
+
+// ---------- Notizfeld rechts (eigene Notizen) ----------
+
+/**
+ * Seitliches Notizfeld. Mit Konto werden die Notizen privat im Konto gespeichert,
+ * ohne Konto nur auf diesem Gerät.
+ */
+function createNotepad(layout) {
+  let topic = null;
+  let context = {};
+  let timer = null;
+  let dirty = false;
+
+  const title = h('h3', { class: 'notepad-title' });
+  const where = h('p', { class: 'muted small notepad-where' });
+  const status = h('span', { class: 'muted small', 'aria-live': 'polite' });
+  const area = h('textarea', {
+    id: 'notepad-text',
+    class: 'notepad-text',
+    maxLength: 20000,
+    placeholder: 'Schreib hier deine eigenen Notizen zu diesem Thema …',
+    'aria-label': 'Meine Notizen',
+    oninput: () => {
+      dirty = true;
+      status.textContent = 'Ungespeichert …';
+      clearTimeout(timer);
+      timer = setTimeout(save, 800);
+    },
+  });
+  const consent = h('div', { class: 'consent', hidden: true, role: 'dialog', 'aria-label': 'Word öffnen erlauben?' });
+  const wordBtn = h('button', { type: 'button', onclick: () => askWord() }, 'In Word öffnen');
+
+  const panel = h('aside', { class: 'notepad', hidden: true, 'aria-label': 'Meine Notizen' },
+    h('div', { class: 'notepad-head' },
+      h('div', {}, h('span', { class: 'eyebrow' }, 'Meine Notizen'), title),
+      h('button', { type: 'button', class: 'link', 'aria-label': 'Notizfeld schließen', onclick: () => close() }, '✕'),
+    ),
+    where,
+    area,
+    h('div', { class: 'notepad-foot' }, status, wordBtn),
+    consent,
+  );
+
+  const localKey = () => `notiz-${topic.id}`;
+
+  async function load() {
+    area.value = '';
+    area.disabled = true;
+    status.textContent = 'Lädt …';
+    if (state.user) {
+      where.textContent = 'Privat in deinem Konto gespeichert – nur du siehst sie.';
+      const r = await api(`/api/mynotes?topic=${encodeURIComponent(topic.id)}`);
+      area.value = r.text;
+    } else {
+      where.textContent = 'Nur auf diesem Gerät gespeichert. Melde dich unter „Start“ mit deinem Konto an, um sie überall zu haben.';
+      area.value = store(localKey()) || '';
+    }
+    area.disabled = false;
+    status.textContent = area.value ? 'Gespeichert' : '';
+  }
+
+  async function save() {
+    clearTimeout(timer);
+    if (!topic || !dirty) return;
+    dirty = false;
+    const text = area.value;
+    try {
+      if (state.user) await api('/api/mynotes', { method: 'POST', body: { topicId: topic.id, text } });
+      else store(localKey(), text);
+      status.textContent = `Gespeichert ${new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}`;
+    } catch (err) {
+      dirty = true;
+      status.textContent = `Nicht gespeichert: ${err.message}`;
+    }
+  }
+
+  async function open(t, fachName, stufe) {
+    if (topic?.id === t.id && !panel.hidden) return;
+    await save();
+    topic = t;
+    context = { fachName, stufe };
+    title.textContent = t.titel;
+    consent.hidden = true;
+    panel.hidden = false;
+    layout.classList.add('has-notes');
+    try {
+      await load();
+    } catch (err) {
+      area.disabled = false;
+      status.textContent = err.message;
+    }
+  }
+
+  async function close() {
+    await save();
+    panel.hidden = true;
+    layout.classList.remove('has-notes');
+  }
+
+  // Erst fragen, dann Word öffnen. Die Erlaubnis kann gemerkt werden.
+  function askWord() {
+    if (store('word-erlaubt') === true) return exportWord();
+    const remember = h('input', { type: 'checkbox', id: 'word-remember' });
+    consent.replaceChildren(
+      h('strong', {}, 'Word öffnen erlauben?'),
+      h('p', { class: 'small' },
+        'StayPrep erstellt aus der Lernzusammenfassung und deinen Notizen ein Word-Dokument (.docx) und übergibt es an Word.'),
+      h('label', { class: 'inline' }, remember, 'Erlaubnis merken'),
+      h('div', { class: 'consent-actions' },
+        h('button', {
+          type: 'button',
+          onclick: () => {
+            if (remember.checked) store('word-erlaubt', true);
+            consent.hidden = true;
+            exportWord();
+          },
+        }, 'Erlauben und öffnen'),
+        h('button', { type: 'button', class: 'secondary', onclick: () => { consent.hidden = true; } }, 'Nicht erlauben'),
+      ),
+    );
+    consent.hidden = false;
+  }
+
+  async function exportWord() {
+    await save();
+    const blob = buildDocx({
+      titel: topic.titel,
+      unterzeile: [context.fachName, context.stufe, `erstellt am ${new Date().toLocaleDateString('de-DE')}`].filter(Boolean).join(' · '),
+      zusammenfassung: topic.zusammenfassung,
+      notizen: area.value,
+    });
+    const name = `${topic.titel.replace(/[\\/:*?"<>|]+/g, '').slice(0, 80)}.docx`;
+    try {
+      await openFile(blob, name);
+      status.textContent = 'Word-Dokument erstellt';
+    } catch (err) {
+      status.textContent = err.message;
+    }
+  }
+
+  return { panel, open, close };
+}
+
+/** Übergibt eine Datei an das Gerät: auf Handys über „Teilen“ (z. B. an Word), sonst als Download. */
+async function openFile(blob, name) {
+  if (typeof window.__saveFile === 'function') return window.__saveFile(blob, name);
+  const file = new File([blob], name, { type: blob.type });
+  const touch = window.matchMedia?.('(pointer: coarse)').matches;
+  if (touch && navigator.canShare?.({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title: name });
+      return;
+    } catch (err) {
+      if (err?.name === 'AbortError') return;
+    }
+  }
+  const url = URL.createObjectURL(blob);
+  const a = h('a', { href: url, download: name, hidden: true });
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+}
+
+// ---------- Word-Dokument (.docx) ohne Bibliothek ----------
+
+const CRC_TABLE = (() => {
+  const t = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) {
+    let c = n;
+    for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+    t[n] = c >>> 0;
+  }
+  return t;
+})();
+
+function crc32(bytes) {
+  let c = 0xffffffff;
+  for (const b of bytes) c = CRC_TABLE[(c ^ b) & 0xff] ^ (c >>> 8);
+  return (c ^ 0xffffffff) >>> 0;
+}
+
+/** Minimales ZIP (ohne Kompression) – genug für ein .docx. */
+function zipFiles(files, type) {
+  const enc = new TextEncoder();
+  const parts = [];
+  const central = [];
+  let offset = 0;
+  for (const f of files) {
+    const name = enc.encode(f.name);
+    const data = enc.encode(f.text);
+    const crc = crc32(data);
+    const local = new DataView(new ArrayBuffer(30));
+    local.setUint32(0, 0x04034b50, true);
+    local.setUint16(4, 20, true);
+    local.setUint16(6, 0x0800, true); // Dateinamen in UTF-8
+    local.setUint16(12, 0x21, true); // Datum 01.01.1980
+    local.setUint32(14, crc, true);
+    local.setUint32(18, data.length, true);
+    local.setUint32(22, data.length, true);
+    local.setUint16(26, name.length, true);
+    parts.push(new Uint8Array(local.buffer), name, data);
+
+    const cen = new DataView(new ArrayBuffer(46));
+    cen.setUint32(0, 0x02014b50, true);
+    cen.setUint16(4, 20, true);
+    cen.setUint16(6, 20, true);
+    cen.setUint16(8, 0x0800, true);
+    cen.setUint16(14, 0x21, true);
+    cen.setUint32(16, crc, true);
+    cen.setUint32(20, data.length, true);
+    cen.setUint32(24, data.length, true);
+    cen.setUint16(28, name.length, true);
+    cen.setUint32(42, offset, true);
+    central.push(new Uint8Array(cen.buffer), name);
+    offset += 30 + name.length + data.length;
+  }
+  const centralSize = central.reduce((sum, p) => sum + p.length, 0);
+  const end = new DataView(new ArrayBuffer(22));
+  end.setUint32(0, 0x06054b50, true);
+  end.setUint16(8, files.length, true);
+  end.setUint16(10, files.length, true);
+  end.setUint32(12, centralSize, true);
+  end.setUint32(16, offset, true);
+  return new Blob([...parts, ...central, new Uint8Array(end.buffer)], { type });
+}
+
+function buildDocx({ titel, unterzeile, zusammenfassung, notizen }) {
+  const esc = (s) => String(s)
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '')
+    .replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  const run = (text, { bold = false, size = 22, color } = {}) =>
+    `<w:r><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/>${bold ? '<w:b/>' : ''}${color ? `<w:color w:val="${color}"/>` : ''}<w:sz w:val="${size}"/></w:rPr><w:t xml:space="preserve">${esc(text)}</w:t></w:r>`;
+  const para = (runs, { after = 120, before = 0, bullet = false } = {}) =>
+    `<w:p><w:pPr><w:spacing w:before="${before}" w:after="${after}"/>${bullet ? '<w:ind w:left="360" w:hanging="360"/>' : ''}</w:pPr>${runs}</w:p>`;
+
+  const body = [
+    para(run(titel, { bold: true, size: 36 }), { after: 60 }),
+    para(run(unterzeile, { size: 20, color: '6B5B45' }), { after: 240 }),
+    para(run('Lernzusammenfassung', { bold: true, size: 28 }), { before: 120 }),
+    ...zusammenfassung.map((z) => para(run(`•  ${z}`), { bullet: true, after: 80 })),
+    para(run('Meine Notizen', { bold: true, size: 28 }), { before: 240 }),
+    ...(notizen.trim() ? notizen.split('\n') : ['']).map((line) => para(run(line), { after: 80 })),
+  ].join('');
+
+  const xmlHead = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
+  return zipFiles([
+    {
+      name: '[Content_Types].xml',
+      text: `${xmlHead}<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>`,
+    },
+    {
+      name: '_rels/.rels',
+      text: `${xmlHead}<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>`,
+    },
+    {
+      name: 'word/document.xml',
+      text: `${xmlHead}<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>${body}<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1417" w:right="1417" w:bottom="1134" w:left="1417" w:header="708" w:footer="708" w:gutter="0"/></w:sectPr></w:body></w:document>`,
+    },
+  ], 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
 }
 
 // ---------- Start ----------

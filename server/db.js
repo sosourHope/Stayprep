@@ -7,6 +7,7 @@ const EMPTY = () => ({
   grades: [],
   homework: [],
   notes: [],
+  mynotes: [],
   jahrgaenge: {},
 });
 

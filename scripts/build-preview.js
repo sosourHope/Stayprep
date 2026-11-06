@@ -26,7 +26,7 @@ function replaceOnce(src, from, to) {
 // Frontend: Navigation im Speicher statt über die Adresse (die Vorschau läuft in einem Rahmen).
 let app = read('public/app.js');
 app = replaceOnce(app, "function currentRoute() {\n  return location.hash.replace(/^#/, '') || '/';\n}",
-  "let ROUTE = '/noten';\nfunction currentRoute() {\n  return ROUTE;\n}");
+  "let ROUTE = '/lehrplan';\nfunction currentRoute() {\n  return ROUTE;\n}");
 app = replaceOnce(app, 'function go(route) {\n  location.hash = `#${route}`;\n}',
   'function go(route) {\n  ROUTE = route;\n  window.scrollTo(0, 0);\n  router();\n}\nwindow.__go = go;');
 app = replaceOnce(app, "h('a', { href: `#${href}`, class:",
@@ -84,6 +84,9 @@ const demoApi = `
       ],
       notes: [
         { id: uid(), klasse: 12, topicId: 'mathe-12-kurvendiskussion', text: 'Merksatz: f″ < 0 → Hochpunkt, weil der Graph dort „traurig“ (rechtsgekrümmt) ist.', autor: 'Tom', memberId: 'm-Tom', createdAt: ago(2) },
+      ],
+      mynotes: [
+        { userId, topicId: 'mathe-12-kurvendiskussion', text: 'Klausur am Freitag!\\nVorgehen merken: Ableitungen → f′(x) = 0 → mit f″ prüfen.\\nBeispiel aus dem Unterricht: f(x) = x³ − 3x → H(−1|2), T(1|−2).', updatedAt: ago(1) },
       ],
       done: [],
     };
@@ -209,6 +212,24 @@ const demoApi = `
       d.homework = d.homework.filter((x) => x !== h); save();
       return { ok: true };
     }
+    if (method === 'GET' && p === '/api/mynotes') {
+      const u = user();
+      d.mynotes = d.mynotes || [];
+      const t = url.searchParams.get('topic') || '';
+      const n = d.mynotes.find((x) => x.userId === u.id && x.topicId === t);
+      return { topicId: t, text: n ? n.text : '', updatedAt: n ? n.updatedAt : null };
+    }
+    if (method === 'POST' && p === '/api/mynotes') {
+      const u = user();
+      d.mynotes = d.mynotes || [];
+      if (![11, 12, 13].some((k) => topicExists(k, body.topicId))) fail(400, 'Unbekanntes Thema.');
+      const text = typeof body.text === 'string' ? body.text : '';
+      const updatedAt = new Date().toISOString();
+      d.mynotes = d.mynotes.filter((x) => !(x.userId === u.id && x.topicId === body.topicId));
+      if (text.trim()) d.mynotes.push({ userId: u.id, topicId: body.topicId, text, updatedAt });
+      save();
+      return { topicId: body.topicId, text, updatedAt };
+    }
     if (method === 'GET' && p === '/api/lehrplan') return LEHRPLAN[jg().klasse];
     if (method === 'GET' && p === '/api/notes') {
       const j = jg();
@@ -268,7 +289,7 @@ body { background: var(--page); color: var(--text); }
 `;
 
 const html = `<title>StayPrep</title>
-<meta name="theme-color" content="#0b1f3a">
+<meta name="theme-color" content="#ffffff">
 <link rel="icon" href="${icon}" type="image/svg+xml">
 <style>
 ${css}
@@ -289,12 +310,28 @@ ${previewCss}
 ${demoApi}
 </script>
 <script type="module">
+window.__saveFile = async (blob, filename) => {
+  const downloads = window.claude?.use ? await window.claude.use('downloads') : null;
+  if (!downloads) throw new Error('Speichern ist in dieser Ansicht nicht möglich.');
+  try {
+    await downloads.save({ filename, data: blob });
+  } catch (err) {
+    if (err?.code === 'declined') return;
+    throw new Error(err?.message || 'Speichern nicht möglich.');
+  }
+};
 ${app}
+// Erstes Thema öffnen, damit das Notizfeld rechts gleich zu sehen ist
+(function openFirstTopic(tries = 0) {
+  const first = document.querySelector('details.topic');
+  if (first) first.open = true;
+  else if (tries < 40) setTimeout(() => openFirstTopic(tries + 1), 100);
+})();
 document.getElementById('brand').addEventListener('click', (e) => { e.preventDefault(); go('/'); });
 document.getElementById('reset-demo').addEventListener('click', async () => {
   window.__resetDemo();
   await refreshMe();
-  go('/noten');
+  go('/lehrplan');
 });
 </script>
 `;

@@ -3,6 +3,8 @@ import path from 'node:path';
 import { hashSecret, verifySecret, newToken, tokenHash, newId } from './auth.js';
 import { KLASSEN, lehrplanFuer, topicExists, STUFEN } from './lehrplan.js';
 
+const MAX_MYNOTE = 20000;
+
 const USER_SESSION_DAYS = 30;
 const JG_SESSION_DAYS = 180;
 const MAX_BODY = 100 * 1024;
@@ -247,11 +249,41 @@ export function createApp({ db, publicDir, secureCookies = false, rateLimit = { 
   route('DELETE', '/api/account', async (req, res, body) => {
     const user = requireUser(req);
     data.grades = data.grades.filter((g) => g.userId !== user.id);
+    data.mynotes = data.mynotes.filter((n) => n.userId !== user.id);
     data.sessions = data.sessions.filter((s) => s.userId !== user.id);
     data.users = data.users.filter((u) => u.id !== user.id);
     db.save();
     setCookie(res, 'sid', '', 0);
     return { ok: true };
+  });
+
+  // Eigene Notizen zu Lehrplan-Themen (privat, im Konto gespeichert)
+
+  const anyTopic = (topicId) => typeof topicId === 'string' && KLASSEN.some((k) => topicExists(k, topicId));
+
+  route('GET', '/api/mynotes', (req, res, body, params, query) => {
+    const user = requireUser(req);
+    const topicId = query.get('topic') || '';
+    const note = data.mynotes.find((n) => n.userId === user.id && n.topicId === topicId);
+    return { topicId, text: note?.text || '', updatedAt: note?.updatedAt || null };
+  });
+
+  route('POST', '/api/mynotes', (req, res, body) => {
+    const user = requireUser(req);
+    if (!anyTopic(body.topicId)) fail(400, 'Unbekanntes Thema.');
+    const text = typeof body.text === 'string' ? body.text : '';
+    if (text.length > MAX_MYNOTE) fail(400, `Notizen dürfen höchstens ${MAX_MYNOTE} Zeichen lang sein.`);
+    const updatedAt = new Date().toISOString();
+    const existing = data.mynotes.find((n) => n.userId === user.id && n.topicId === body.topicId);
+    if (!text.trim()) {
+      data.mynotes = data.mynotes.filter((n) => n !== existing);
+    } else if (existing) {
+      Object.assign(existing, { text, updatedAt });
+    } else {
+      data.mynotes.push({ userId: user.id, topicId: body.topicId, text, updatedAt });
+    }
+    db.save();
+    return { topicId: body.topicId, text, updatedAt };
   });
 
   // --- Jahrgangsbereich (öffentlich für den Jahrgang, eigener Zugang) ---

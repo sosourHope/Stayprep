@@ -142,3 +142,24 @@ test('Statische Dateien und kein Path-Traversal', async () => {
   res = await fetch(`${base}/..%2Fpackage.json`);
   assert.equal(res.status, 404);
 });
+
+test('Eigene Notizen zu Lehrplan-Themen sind privat', async () => {
+  const topicId = 'mathe-12-kurvendiskussion';
+  const a = client();
+  assert.equal((await a('/api/mynotes?topic=' + topicId)).status, 401);
+  await a('/api/register', { method: 'POST', body: { email: 'notiz@example.de', password: 'geheim123' } });
+  let r = await a('/api/mynotes', { method: 'POST', body: { topicId, text: 'f″ > 0 → Tiefpunkt' } });
+  assert.equal(r.status, 200);
+  r = await a('/api/mynotes?topic=' + topicId);
+  assert.equal(r.data.text, 'f″ > 0 → Tiefpunkt');
+  assert.equal((await a('/api/mynotes', { method: 'POST', body: { topicId: 'gibts-nicht', text: 'x' } })).status, 400);
+
+  const b = client();
+  await b('/api/register', { method: 'POST', body: { email: 'andere@example.de', password: 'geheim123' } });
+  r = await b('/api/mynotes?topic=' + topicId);
+  assert.equal(r.data.text, '', 'andere Konten sehen die Notiz nicht');
+
+  await a('/api/mynotes', { method: 'POST', body: { topicId, text: '' } });
+  r = await a('/api/mynotes?topic=' + topicId);
+  assert.equal(r.data.text, '');
+});
