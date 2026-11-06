@@ -5,15 +5,24 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { openDb } from '../server/db.js';
 import { createApp, ensureJahrgangCodes } from '../server/app.js';
+import { createSmtpMailer } from '../server/mail.js';
+import net from 'node:net';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 let server;
 let base;
+const mails = [];
 
 before(async () => {
   const db = openDb(null);
   await ensureJahrgangCodes(db, { JAHRGANG_CODE_11: 'code-elf', JAHRGANG_CODE_12: 'code-zwoelf', JAHRGANG_CODE_13: 'code-dreizehn' }, () => {});
-  const handler = createApp({ db, publicDir: path.join(root, 'public'), rateLimit: { max: 1000, windowMs: 60000 } });
+  const handler = createApp({
+    db,
+    publicDir: path.join(root, 'public'),
+    rateLimit: { max: 1000, windowMs: 60000 },
+    appUrl: 'https://stayprep.example',
+    sendMail: async (mail) => { mails.push(mail); },
+  });
   server = http.createServer(handler);
   await new Promise((r) => server.listen(0, r));
   base = `http://127.0.0.1:${server.address().port}`;
@@ -162,4 +171,81 @@ test('Eigene Notizen zu Lehrplan-Themen sind privat', async () => {
   await a('/api/mynotes', { method: 'POST', body: { topicId, text: '' } });
   r = await a('/api/mynotes?topic=' + topicId);
   assert.equal(r.data.text, '');
+});
+
+test('Passwort vergessen: Link per E-Mail, neues Passwort, alte Anmeldungen enden', async () => {
+  const alt = client();
+  await alt('/api/register', { method: 'POST', body: { email: 'vergesslich@example.de', password: 'altes-passwort' } });
+
+  const c = client();
+  // Unbekannte Adresse: gleiche Antwort, aber keine Mail
+  let r = await c('/api/password/forgot', { method: 'POST', body: { email: 'niemand@example.de' } });
+  assert.equal(r.status, 200);
+  assert.equal(mails.length, 0);
+
+  r = await c('/api/password/forgot', { method: 'POST', body: { email: 'Vergesslich@Example.de' } });
+  assert.equal(r.status, 200);
+  await new Promise((done) => setTimeout(done, 10));
+  assert.equal(mails.length, 1);
+  assert.equal(mails[0].to, 'vergesslich@example.de');
+  const token = mails[0].text.match(/https:\/\/stayprep\.example\/#\/reset\/([\w-]+)/)?.[1];
+  assert.ok(token, 'Mail enthält den Link');
+
+  r = await c('/api/password/reset', { method: 'POST', body: { token: 'falsch', password: 'neues-passwort' } });
+  assert.equal(r.status, 400);
+  r = await c('/api/password/reset', { method: 'POST', body: { token, password: 'kurz' } });
+  assert.equal(r.status, 400);
+  r = await c('/api/password/reset', { method: 'POST', body: { token, password: 'neues-passwort' } });
+  assert.equal(r.status, 200);
+  assert.equal((await c('/api/grades')).status, 200, 'nach dem Zurücksetzen angemeldet');
+
+  // Link nur einmal gültig, alte Sitzung beendet, nur neues Passwort gilt
+  assert.equal((await c('/api/password/reset', { method: 'POST', body: { token, password: 'nochmal-neu' } })).status, 400);
+  assert.equal((await alt('/api/grades')).status, 401);
+  const d = client();
+  assert.equal((await d('/api/login', { method: 'POST', body: { email: 'vergesslich@example.de', password: 'altes-passwort' } })).status, 401);
+  assert.equal((await d('/api/login', { method: 'POST', body: { email: 'vergesslich@example.de', password: 'neues-passwort' } })).status, 200);
+});
+
+test('SMTP-Versand an einen Test-Mailserver', async () => {
+  const received = { commands: [], data: '' };
+  const smtp = net.createServer((sock) => {
+    let inData = false;
+    let buf = '';
+    sock.write('220 test ESMTP\r\n');
+    sock.on('data', (chunk) => {
+      buf += chunk;
+      let i;
+      while ((i = buf.indexOf('\r\n')) >= 0) {
+        const line = buf.slice(0, i);
+        buf = buf.slice(i + 2);
+        if (inData) {
+          if (line === '.') { inData = false; sock.write('250 OK queued\r\n'); } else received.data += line + '\n';
+          continue;
+        }
+        received.commands.push(line);
+        if (line.startsWith('EHLO')) sock.write('250-test\r\n250 AUTH LOGIN\r\n');
+        else if (line === 'AUTH LOGIN') sock.write('334 VXNlcm5hbWU6\r\n');
+        else if (received.commands.length === 3) sock.write('334 UGFzc3dvcmQ6\r\n');
+        else if (received.commands.length === 4) sock.write('235 OK\r\n');
+        else if (line === 'DATA') { inData = true; sock.write('354 go\r\n'); } else if (line === 'QUIT') sock.end('221 bye\r\n');
+        else sock.write('250 OK\r\n');
+      }
+    });
+  });
+  await new Promise((done) => smtp.listen(0, done));
+  const send = createSmtpMailer({
+    host: '127.0.0.1', port: smtp.address().port, secure: false, starttls: false,
+    user: 'stayprep', pass: 'geheim', from: 'noreply@stayprep.example',
+  });
+  await send({ to: 'lea@example.de', subject: 'StayPrep: Passwort zurücksetzen', text: 'Hallo Lea,\n.Punkt am Anfang\nhttps://x/#/reset/abc' });
+  smtp.close();
+
+  assert.deepEqual(received.commands.slice(0, 2), ['EHLO stayprep.example', 'AUTH LOGIN']);
+  assert.equal(Buffer.from(received.commands[2], 'base64').toString(), 'stayprep');
+  assert.ok(received.commands.includes('MAIL FROM:<noreply@stayprep.example>'));
+  assert.ok(received.commands.includes('RCPT TO:<lea@example.de>'));
+  const [head, body] = received.data.split('\n\n');
+  assert.match(head, /Subject: =\?UTF-8\?B\?/);
+  assert.equal(Buffer.from(body.replace(/\n/g, ''), 'base64').toString(), 'Hallo Lea,\n.Punkt am Anfang\nhttps://x/#/reset/abc');
 });

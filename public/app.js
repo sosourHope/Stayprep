@@ -190,7 +190,7 @@ const views = {
 
 async function router() {
   const route = currentRoute();
-  const view = views[route] || viewHome;
+  const view = route.startsWith('/reset/') ? () => viewReset(route.slice('/reset/'.length)) : views[route] || viewHome;
   renderNav();
   app.replaceChildren(h('p', { class: 'muted' }, 'Lädt …'));
   try {
@@ -239,8 +239,14 @@ function userCard() {
   }
 
   let mode = 'login';
+  let sentTo = '';
   const card = h('section', { class: 'card' });
+  const switchTo = (m) => () => {
+    mode = m;
+    draw();
+  };
   const draw = () => {
+    if (mode === 'forgot') return drawForgot();
     const isLogin = mode === 'login';
     card.replaceChildren(
       h('span', { class: 'badge private' }, 'Privat'),
@@ -262,17 +268,74 @@ function userCard() {
         h('p', { class: 'error' }),
         h('button', { type: 'submit' }, isLogin ? 'Anmelden' : 'Registrieren'),
       ),
-      h('button', {
-        class: 'link',
-        onclick: () => {
-          mode = isLogin ? 'register' : 'login';
-          draw();
-        },
-      }, isLogin ? 'Noch kein Konto? Jetzt registrieren' : 'Schon ein Konto? Anmelden'),
+      h('div', { class: 'card-links' },
+        isLogin && h('button', { class: 'link', onclick: switchTo('forgot') }, 'Passwort vergessen?'),
+        h('button', { class: 'link', onclick: switchTo(isLogin ? 'register' : 'login') },
+          isLogin ? 'Noch kein Konto? Jetzt registrieren' : 'Schon ein Konto? Anmelden'),
+      ),
+    );
+  };
+  const drawForgot = () => {
+    card.replaceChildren(
+      h('span', { class: 'badge private' }, 'Privat'),
+      h('h2', {}, 'Passwort vergessen'),
+      sentTo
+        ? h('div', { class: 'hint' },
+          h('p', {}, 'Falls es für ', h('strong', {}, sentTo), ' ein Konto gibt, haben wir dir eine E-Mail mit einem Link geschickt.'),
+          h('p', { class: 'small' }, 'Der Link ist 60 Minuten gültig. Schau auch im Spam-Ordner nach.'))
+        : h('p', { class: 'muted small' }, 'Gib die E-Mail-Adresse deines Kontos ein. Wir schicken dir einen Link, mit dem du ein neues Passwort festlegst.'),
+      !sentTo && h('form', {
+        onsubmit: submitHandler(async (v) => {
+          const res = await api('/api/password/forgot', { method: 'POST', body: v });
+          sentTo = v.email.trim();
+          drawForgot();
+          // Nur in der Vorschau: Dort gibt es keinen Mailversand, der Link kommt direkt zurück.
+          if (res.demoLink) {
+            card.append(h('button', { type: 'button', onclick: () => go(res.demoLink) }, 'E-Mail-Link öffnen (Vorschau)'));
+          }
+        }),
+      },
+        h('label', {}, 'E-Mail', h('input', { name: 'email', type: 'email', required: true, autocomplete: 'email' })),
+        h('p', { class: 'error' }),
+        h('button', { type: 'submit' }, 'Link senden'),
+      ),
+      h('div', { class: 'card-links' },
+        h('button', { class: 'link', onclick: () => { sentTo = ''; switchTo('login')(); } }, 'Zurück zur Anmeldung'),
+      ),
     );
   };
   draw();
   return card;
+}
+
+function viewReset(token) {
+  app.replaceChildren(
+    h('section', { class: 'card narrow' },
+      h('span', { class: 'badge private' }, 'Privat'),
+      h('h1', {}, 'Neues Passwort festlegen'),
+      h('p', { class: 'muted small' }, 'Wähle ein neues Passwort für dein Konto. Danach bist du direkt angemeldet, und alle anderen Anmeldungen werden beendet.'),
+      h('form', {
+        onsubmit: submitHandler(async (v) => {
+          if (v.password !== v.password2) throw new Error('Die beiden Passwörter stimmen nicht überein.');
+          const res = await api('/api/password/reset', { method: 'POST', body: { token, password: v.password } });
+          state.user = res.user;
+          // Den Link aus dem Browserverlauf entfernen.
+          try {
+            history.replaceState(null, '', location.pathname + location.search);
+          } catch {
+            // ignorieren
+          }
+          go('/noten');
+        }),
+      },
+        h('label', {}, 'Neues Passwort', h('input', { name: 'password', type: 'password', required: true, minLength: 8, autocomplete: 'new-password' })),
+        h('label', {}, 'Neues Passwort wiederholen', h('input', { name: 'password2', type: 'password', required: true, minLength: 8, autocomplete: 'new-password' })),
+        h('p', { class: 'muted small' }, 'Mindestens 8 Zeichen.'),
+        h('p', { class: 'error' }),
+        h('button', { type: 'submit' }, 'Passwort speichern'),
+      ),
+    ),
+  );
 }
 
 function jahrgangCard() {

@@ -299,3 +299,7 @@ details.topic .body { padding: 0 18px 16px; }
   .notepad-text { min-height: 140px; }
   .lp-layout.has-notes { padding-bottom: 62vh; }
 }
+
+.card-links { display: flex; justify-content: space-between; gap: 4px 12px; flex-wrap: wrap; margin-top: 6px; }
+.card.narrow { max-width: 460px; margin-inline: auto; }
+.card.narrow h1 { margin-top: 8px; }

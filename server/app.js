@@ -8,6 +8,7 @@ const MAX_MYNOTE = 20000;
 const USER_SESSION_DAYS = 30;
 const JG_SESSION_DAYS = 180;
 const MAX_BODY = 100 * 1024;
+const RESET_MINUTES = 60;
 const ARTEN = {
   klausur: { label: 'Klassenarbeit / Klausur', gewicht: 2 },
   test: { label: 'Test', gewicht: 1 },
@@ -84,8 +85,16 @@ function createRateLimiter({ max, windowMs }) {
   };
 }
 
-export function createApp({ db, publicDir, secureCookies = false, rateLimit = { max: 20, windowMs: 15 * 60 * 1000 } }) {
+export function createApp({
+  db,
+  publicDir,
+  secureCookies = false,
+  rateLimit = { max: 20, windowMs: 15 * 60 * 1000 },
+  appUrl = 'http://localhost:3000',
+  sendMail = async () => {},
+}) {
   const { data } = db;
+  data.resets ||= [];
   const allowLogin = createRateLimiter(rateLimit);
 
   // ---------- Sessions ----------
@@ -199,6 +208,55 @@ export function createApp({ db, publicDir, secureCookies = false, rateLimit = { 
     return { ok: true };
   });
 
+  // --- Passwort vergessen: Link per E-Mail ---
+
+  route('POST', '/api/password/forgot', (req, res, body) => {
+    checkRate(req, 'forgot');
+    const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
+    const user = data.users.find((u) => u.email === email);
+    if (user) {
+      const token = newToken();
+      const now = Date.now();
+      data.resets = data.resets.filter((r) => r.userId !== user.id && r.expires > now);
+      data.resets.push({ hash: tokenHash(token), userId: user.id, expires: now + RESET_MINUTES * 60 * 1000 });
+      db.save();
+      const link = `${appUrl.replace(/\/+$/, '')}/#/reset/${token}`;
+      // Nicht auf den Versand warten: Die Antwortzeit soll nicht verraten, ob es das Konto gibt.
+      sendMail({
+        to: user.email,
+        subject: 'StayPrep: Passwort zurücksetzen',
+        text: [
+          'Hallo,',
+          '',
+          `für dein StayPrep-Konto wurde ein neues Passwort angefordert. Über diesen Link kannst du in den nächsten ${RESET_MINUTES} Minuten ein neues Passwort festlegen:`,
+          '',
+          link,
+          '',
+          'Wenn du das nicht warst, kannst du diese E-Mail ignorieren. Dein bisheriges Passwort bleibt dann gültig.',
+          '',
+          'Dein StayPrep',
+        ].join('\n'),
+      }).catch((err) => console.error('E-Mail-Versand fehlgeschlagen:', err.message));
+    }
+    return { ok: true };
+  });
+
+  route('POST', '/api/password/reset', async (req, res, body) => {
+    checkRate(req, 'reset');
+    const hash = tokenHash(typeof body.token === 'string' ? body.token : '');
+    const entry = data.resets.find((r) => r.hash === hash && r.expires > Date.now());
+    const user = entry && data.users.find((u) => u.id === entry.userId);
+    if (!user) fail(400, 'Der Link ist ungültig oder abgelaufen. Bitte fordere einen neuen an.');
+    const password = typeof body.password === 'string' ? body.password : '';
+    if (password.length < 8 || password.length > 200) fail(400, 'Das Passwort muss mindestens 8 Zeichen lang sein.');
+    user.passwordHash = await hashSecret(password);
+    // Link verbrauchen und alle bisherigen Anmeldungen dieses Kontos beenden.
+    data.resets = data.resets.filter((r) => r.userId !== user.id);
+    data.sessions = data.sessions.filter((s) => s.userId !== user.id);
+    createSession(res, 'user', { userId: user.id }, USER_SESSION_DAYS);
+    return { user: { email: user.email } };
+  });
+
   route('GET', '/api/grades', (req) => {
     const user = requireUser(req);
     return {
@@ -250,6 +308,7 @@ export function createApp({ db, publicDir, secureCookies = false, rateLimit = { 
     const user = requireUser(req);
     data.grades = data.grades.filter((g) => g.userId !== user.id);
     data.mynotes = data.mynotes.filter((n) => n.userId !== user.id);
+    data.resets = data.resets.filter((r) => r.userId !== user.id);
     data.sessions = data.sessions.filter((s) => s.userId !== user.id);
     data.users = data.users.filter((u) => u.id !== user.id);
     db.save();

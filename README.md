@@ -11,6 +11,7 @@ Schul-App für das **berufliche Gymnasium in Baden-Württemberg (Klasse 11–13)
 ## Funktionen
 
 - **Private Notenverwaltung**
+  - **Passwort vergessen?** Link per E-Mail (60 Minuten gültig) zum Festlegen eines neuen Passworts
   - Klasse 11 (Eingangsklasse): Noten 1–6 mit Tendenzen (1-, 2+, …)
   - Klasse 12/13 (Jahrgangsstufe 1/2): 0–15 Punkte, Umrechnung in Noten
   - Art der Note (Klausur, Test, mündlich, GFS …) und Gewichtung, Fach- und Gesamtdurchschnitt
@@ -61,6 +62,22 @@ npm run set-code -- 12 mein-neuer-code
 | `DB_FILE` | `data/db.json` | Speicherort der Daten |
 | `COOKIE_SECURE` | – | Auf `1` setzen, wenn die App über HTTPS läuft |
 | `JAHRGANG_CODE_11/12/13` | – | Zugangscodes der Jahrgänge |
+| `APP_URL` | `http://localhost:PORT` | Öffentliche Adresse der App – daraus wird der Link in der „Passwort vergessen“-Mail gebaut |
+| `SMTP_HOST` | – | Mailserver für den Versand, z. B. `smtp.gmail.com` oder `smtp.office365.com` |
+| `SMTP_PORT` | `465` | `465` (TLS) oder `587` (STARTTLS) |
+| `SMTP_USER` / `SMTP_PASS` | – | Zugangsdaten des Mailkontos (bei Gmail ein App-Passwort) |
+| `MAIL_FROM` | `SMTP_USER` | Absenderadresse |
+
+### E-Mails für „Passwort vergessen“
+
+Ohne `SMTP_HOST` verschickt die App keine E-Mails, sondern schreibt sie in die Konsole – praktisch zum
+Ausprobieren. Für den echten Betrieb einen Mailserver eintragen, z. B.:
+
+```bash
+APP_URL=https://stayprep.meine-schule.de \
+SMTP_HOST=smtp.gmail.com SMTP_PORT=465 SMTP_USER=stayprep@gmail.com SMTP_PASS=app-passwort \
+npm start
+```
 
 ## Tests
 
@@ -71,6 +88,7 @@ npm test
 ## Sicherheit
 
 - Passwörter und Jahrgangscodes werden mit **scrypt** + Salt gehasht gespeichert
+- Links zum Zurücksetzen des Passworts sind 60 Minuten und nur einmal gültig; danach werden alle anderen Anmeldungen des Kontos beendet. Die App verrät nicht, ob es zu einer E-Mail-Adresse ein Konto gibt
 - Sitzungen über zufällige Tokens in `HttpOnly`/`SameSite=Lax`-Cookies (in der Datenbank nur als SHA-256-Hash)
 - Schreibende Anfragen nur mit `Content-Type: application/json` (CSRF-Schutz)
 - Begrenzung der Anmeldeversuche pro IP, strenge Content-Security-Policy

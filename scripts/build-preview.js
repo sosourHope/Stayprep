@@ -150,6 +150,26 @@ const demoApi = `
       d.userSession = u.id; save();
       return { user: { email } };
     }
+    if (method === 'POST' && p === '/api/password/forgot') {
+      const email = String(body.email || '').trim().toLowerCase();
+      const u = d.users.find((x) => x.email === email);
+      if (!u) return { ok: true };
+      const token = uid();
+      d.resets = (d.resets || []).filter((r) => r.userId !== u.id);
+      d.resets.push({ token, userId: u.id, expires: Date.now() + 3600000 });
+      save();
+      return { ok: true, demoLink: '/reset/' + token };
+    }
+    if (method === 'POST' && p === '/api/password/reset') {
+      const r = (d.resets || []).find((x) => x.token === body.token && x.expires > Date.now());
+      const u = r && d.users.find((x) => x.id === r.userId);
+      if (!u) fail(400, 'Der Link ist ungültig oder abgelaufen. Bitte fordere einen neuen an.');
+      if (typeof body.password !== 'string' || body.password.length < 8) fail(400, 'Das Passwort muss mindestens 8 Zeichen lang sein.');
+      u.pw = await sha(body.password);
+      d.resets = d.resets.filter((x) => x.userId !== u.id);
+      d.userSession = u.id; save();
+      return { user: { email: u.email } };
+    }
     if (method === 'POST' && p === '/api/logout') { d.userSession = null; save(); return { ok: true }; }
     if (method === 'GET' && p === '/api/grades') {
       const u = user();

@@ -8,6 +8,7 @@ const EMPTY = () => ({
   homework: [],
   notes: [],
   mynotes: [],
+  resets: [],
   jahrgaenge: {},
 });
 
