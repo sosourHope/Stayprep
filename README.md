@@ -12,6 +12,7 @@ Schul-App für das **Berufliche Gymnasium in Sachsen (Klasse 11–13)**.
 
 - **Private Notenverwaltung**
   - **Passwort vergessen?** Link per E-Mail (60 Minuten gültig) zum Festlegen eines neuen Passworts
+  - **Anmeldelink per E-Mail** (15 Minuten gültig) als Alternative zum Passwort
   - Klasse 11 (Einführungsphase): Noten 1–6 mit Tendenzen (1-, 2+, …)
   - Jahrgangsstufen 12/13 (Qualifikationsphase): 0–15 Punkte, Umrechnung in Noten
   - Art der Note (Klausur, Test, mündlich, Präsentation/Komplexe Leistung …) und Gewichtung, Fach- und Gesamtdurchschnitt
@@ -30,7 +31,11 @@ Die Inhalte orientieren sich an den sächsischen Lehrplänen für das Berufliche
 Reihenfolge und Schwerpunkte können je nach Schule und Fachrichtung abweichen.
 Die Inhalte liegen in `server/lehrplan.js` und lassen sich dort leicht anpassen oder erweitern.
 
-## Starten
+## Online stellen (dauerhaft speichern, echte E-Mails)
+
+Schritt-für-Schritt-Anleitung: **[ONLINE-STELLEN.md](ONLINE-STELLEN.md)** (Render + Gmail oder Brevo).
+
+## Starten (lokal)
 
 Benötigt nur **Node.js ≥ 20** – keine weiteren Pakete.
 
@@ -67,6 +72,8 @@ npm run set-code -- 12 mein-neuer-code
 | `SMTP_PORT` | `465` | `465` (TLS) oder `587` (STARTTLS) |
 | `SMTP_USER` / `SMTP_PASS` | – | Zugangsdaten des Mailkontos (bei Gmail ein App-Passwort) |
 | `MAIL_FROM` | `SMTP_USER` | Absenderadresse |
+| `BREVO_API_KEY` | – | Alternative zu SMTP: Versand über die Brevo-API (HTTPS) |
+| `TRUST_PROXY` | – | Auf `1` setzen hinter einem Reverse-Proxy (bei Render/Railway automatisch) |
 
 ### E-Mails für „Passwort vergessen“
 

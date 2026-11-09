@@ -11,7 +11,8 @@
     "start": "node server/index.js",
     "test": "node --test test/*.test.js",
     "set-code": "node scripts/set-code.js",
-    "build:preview": "node scripts/build-preview.js"
+    "build:preview": "node scripts/build-preview.js",
+    "test-mail": "node scripts/test-mail.js"
   },
   "license": "MIT"
 }

@@ -5,7 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { openDb } from '../server/db.js';
 import { createApp, ensureJahrgangCodes } from '../server/app.js';
-import { createSmtpMailer } from '../server/mail.js';
+import { createSmtpMailer, createBrevoMailer, mailerFromEnv } from '../server/mail.js';
 import net from 'node:net';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -248,4 +248,59 @@ test('SMTP-Versand an einen Test-Mailserver', async () => {
   const [head, body] = received.data.split('\n\n');
   assert.match(head, /Subject: =\?UTF-8\?B\?/);
   assert.equal(Buffer.from(body.replace(/\n/g, ''), 'base64').toString(), 'Hallo Lea,\n.Punkt am Anfang\nhttps://x/#/reset/abc');
+});
+
+test('Anmeldelink per E-Mail meldet einmalig an', async () => {
+  const reg = client();
+  await reg('/api/register', { method: 'POST', body: { email: 'link@example.de', password: 'geheim123' } });
+  const before = mails.length;
+
+  const c = client();
+  let r = await c('/api/login/link', { method: 'POST', body: { email: 'unbekannt@example.de' } });
+  assert.equal(r.status, 200);
+  r = await c('/api/login/link', { method: 'POST', body: { email: 'LINK@example.de' } });
+  assert.equal(r.status, 200);
+  await new Promise((done) => setTimeout(done, 10));
+  assert.equal(mails.length, before + 1, 'nur eine Mail, nur für das bekannte Konto');
+  const mail = mails.at(-1);
+  assert.equal(mail.to, 'link@example.de');
+  const token = mail.text.match(/\/#\/login\/([\w-]+)/)?.[1];
+  assert.ok(token);
+
+  // Ein Anmeldelink taugt nicht zum Passwort-Zurücksetzen
+  assert.equal((await c('/api/password/reset', { method: 'POST', body: { token, password: 'neues-passwort' } })).status, 400);
+  r = await c('/api/login/token', { method: 'POST', body: { token } });
+  assert.equal(r.status, 200);
+  assert.equal((await c('/api/grades')).status, 200);
+  assert.equal((await c('/api/login/token', { method: 'POST', body: { token } })).status, 400, 'nur einmal gültig');
+});
+
+test('Health-Check für den Hoster', async () => {
+  const r = await client()('/api/health');
+  assert.deepEqual(r.data, { ok: true });
+});
+
+test('Brevo-Versand ruft die API richtig auf', async () => {
+  const calls = [];
+  const send = createBrevoMailer({
+    apiKey: 'test-key',
+    from: 'noreply@stayprep.example',
+    fetchImpl: async (url, opts) => { calls.push({ url, opts }); return { ok: true, text: async () => '' }; },
+  });
+  await send({ to: 'lea@example.de', subject: 'Betreff', text: 'Text' });
+  assert.equal(calls[0].url, 'https://api.brevo.com/v3/smtp/email');
+  assert.equal(calls[0].opts.headers['api-key'], 'test-key');
+  assert.deepEqual(JSON.parse(calls[0].opts.body), {
+    sender: { email: 'noreply@stayprep.example', name: 'StayPrep' },
+    to: [{ email: 'lea@example.de' }],
+    subject: 'Betreff',
+    textContent: 'Text',
+  });
+
+  const failing = createBrevoMailer({ apiKey: 'k', from: 'a@b.de', fetchImpl: async () => ({ ok: false, status: 401, text: async () => 'unauthorized' }) });
+  await assert.rejects(failing({ to: 'x@y.de', subject: 's', text: 't' }), /Brevo-Fehler 401/);
+
+  assert.equal(mailerFromEnv({}).kind, null);
+  assert.equal(mailerFromEnv({ BREVO_API_KEY: 'k', MAIL_FROM: 'a@b.de' }).kind, 'Brevo');
+  assert.match(mailerFromEnv({ SMTP_HOST: 'smtp.gmail.com', SMTP_USER: 'a@b.de' }).kind, /SMTP/);
 });

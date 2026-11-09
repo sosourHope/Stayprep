@@ -131,3 +131,42 @@ export function createConsoleMailer(log = console.log) {
     log(`\n--- E-Mail an ${to} (kein SMTP konfiguriert) ---\nBetreff: ${subject}\n\n${text}\n--- Ende ---\n`);
   };
 }
+
+/**
+ * Versand über die HTTPS-API von Brevo (kostenloser Tarif: 300 Mails/Tag).
+ * Praktisch, wenn ein Hoster ausgehendes SMTP sperrt.
+ */
+export function createBrevoMailer({ apiKey, from, fromName = 'StayPrep', fetchImpl = globalThis.fetch }) {
+  if (!apiKey || !from) throw new Error('BREVO_API_KEY und MAIL_FROM müssen gesetzt sein.');
+  return async function sendMail({ to, subject, text }) {
+    const res = await fetchImpl('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: { 'api-key': apiKey, 'content-type': 'application/json', accept: 'application/json' },
+      body: JSON.stringify({ sender: { email: from, name: fromName }, to: [{ email: to }], subject, textContent: text }),
+    });
+    if (!res.ok) {
+      const detail = await res.text().catch(() => '');
+      throw new Error(`Brevo-Fehler ${res.status}: ${detail.slice(0, 200)}`);
+    }
+  };
+}
+
+/** Wählt den Versandweg anhand der Umgebungsvariablen. */
+export function mailerFromEnv(env = process.env) {
+  if (env.BREVO_API_KEY) {
+    return { kind: 'Brevo', sendMail: createBrevoMailer({ apiKey: env.BREVO_API_KEY, from: env.MAIL_FROM }) };
+  }
+  if (env.SMTP_HOST) {
+    return {
+      kind: `SMTP (${env.SMTP_HOST})`,
+      sendMail: createSmtpMailer({
+        host: env.SMTP_HOST,
+        port: Number(env.SMTP_PORT) || 465,
+        user: env.SMTP_USER,
+        pass: env.SMTP_PASS,
+        from: env.MAIL_FROM || env.SMTP_USER,
+      }),
+    };
+  }
+  return { kind: null, sendMail: createConsoleMailer() };
+}

@@ -150,6 +150,24 @@ const demoApi = `
       d.userSession = u.id; save();
       return { user: { email } };
     }
+    if (method === 'POST' && p === '/api/login/link') {
+      const email = String(body.email || '').trim().toLowerCase();
+      const u = d.users.find((x) => x.email === email);
+      if (!u) return { ok: true };
+      const token = uid();
+      d.resets = (d.resets || []).filter((r) => !(r.userId === u.id && r.kind === 'login'));
+      d.resets.push({ token, userId: u.id, kind: 'login', expires: Date.now() + 900000 });
+      save();
+      return { ok: true, demoLink: '/login/' + token };
+    }
+    if (method === 'POST' && p === '/api/login/token') {
+      const r = (d.resets || []).find((x) => x.token === body.token && x.kind === 'login' && x.expires > Date.now());
+      const u = r && d.users.find((x) => x.id === r.userId);
+      if (!u) fail(400, 'Der Link ist ungültig oder abgelaufen. Bitte fordere einen neuen an.');
+      d.resets = d.resets.filter((x) => x !== r);
+      d.userSession = u.id; save();
+      return { user: { email: u.email } };
+    }
     if (method === 'POST' && p === '/api/password/forgot') {
       const email = String(body.email || '').trim().toLowerCase();
       const u = d.users.find((x) => x.email === email);
@@ -161,7 +179,7 @@ const demoApi = `
       return { ok: true, demoLink: '/reset/' + token };
     }
     if (method === 'POST' && p === '/api/password/reset') {
-      const r = (d.resets || []).find((x) => x.token === body.token && x.expires > Date.now());
+      const r = (d.resets || []).find((x) => x.token === body.token && x.kind !== 'login' && x.expires > Date.now());
       const u = r && d.users.find((x) => x.id === r.userId);
       if (!u) fail(400, 'Der Link ist ungültig oder abgelaufen. Bitte fordere einen neuen an.');
       if (typeof body.password !== 'string' || body.password.length < 8) fail(400, 'Das Passwort muss mindestens 8 Zeichen lang sein.');
@@ -316,7 +334,7 @@ ${css}
 ${previewCss}
 </style>
 <div class="preview-bar" role="note" lang="de">
-  <span><strong>Vorschau</strong> · Daten bleiben nur in deinem Browser.</span>
+  <span><strong>Vorschau</strong> · Daten bleiben nur in diesem Browser und werden nicht verschickt. Für echte Nutzung die App online stellen.</span>
   <span>Konto: <code>demo@schule.de</code> / <code>demo1234</code></span>
   <span>Jahrgangscodes: <code>demo11</code> <code>demo12</code> <code>demo13</code></span>
   <button type="button" id="reset-demo">Beispieldaten zurücksetzen</button>

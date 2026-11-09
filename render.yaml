@@ -1,0 +1,43 @@
+# Render-Blueprint: StayPrep als Web-Dienst mit festem Laufwerk für die Daten.
+# Anleitung: siehe ONLINE-STELLEN.md
+services:
+  - type: web
+    name: stayprep
+    runtime: node
+    region: frankfurt
+    # Ein festes Laufwerk gibt es bei Render nur in bezahlten Tarifen ("starter" oder höher).
+    # Ohne Laufwerk wären die Daten nach jedem Neustart weg.
+    plan: starter
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    disk:
+      name: stayprep-daten
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: DB_FILE
+        value: /var/data/db.json
+      # E-Mail-Versand: entweder Gmail (SMTP) ...
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: "465"
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      # ... oder Brevo (dann BREVO_API_KEY ausfüllen, SMTP-Werte werden ignoriert)
+      - key: BREVO_API_KEY
+        sync: false
+      - key: MAIL_FROM
+        sync: false
+      # Zugangscodes für die Jahrgangsbereiche
+      - key: JAHRGANG_CODE_11
+        sync: false
+      - key: JAHRGANG_CODE_12
+        sync: false
+      - key: JAHRGANG_CODE_13
+        sync: false

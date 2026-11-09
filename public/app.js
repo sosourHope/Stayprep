@@ -190,7 +190,9 @@ const views = {
 
 async function router() {
   const route = currentRoute();
-  const view = route.startsWith('/reset/') ? () => viewReset(route.slice('/reset/'.length)) : views[route] || viewHome;
+  let view = views[route] || viewHome;
+  if (route.startsWith('/reset/')) view = () => viewReset(route.slice('/reset/'.length));
+  if (route.startsWith('/login/')) view = () => viewLoginLink(route.slice('/login/'.length));
   renderNav();
   app.replaceChildren(h('p', { class: 'muted' }, 'Lädt …'));
   try {
@@ -246,7 +248,7 @@ function userCard() {
     draw();
   };
   const draw = () => {
-    if (mode === 'forgot') return drawForgot();
+    if (mode === 'forgot' || mode === 'link') return drawMailRequest();
     const isLogin = mode === 'login';
     card.replaceChildren(
       h('span', { class: 'badge private' }, 'Privat'),
@@ -269,26 +271,32 @@ function userCard() {
         h('button', { type: 'submit' }, isLogin ? 'Anmelden' : 'Registrieren'),
       ),
       h('div', { class: 'card-links' },
+        isLogin && h('button', { class: 'link', onclick: switchTo('link') }, 'Anmeldelink per E-Mail'),
         isLogin && h('button', { class: 'link', onclick: switchTo('forgot') }, 'Passwort vergessen?'),
         h('button', { class: 'link', onclick: switchTo(isLogin ? 'register' : 'login') },
           isLogin ? 'Noch kein Konto? Jetzt registrieren' : 'Schon ein Konto? Anmelden'),
       ),
     );
   };
-  const drawForgot = () => {
+  // „Passwort vergessen“ und „Anmeldelink per E-Mail“ funktionieren gleich: Adresse eingeben, Link kommt per Mail.
+  const drawMailRequest = () => {
+    const forgot = mode === 'forgot';
+    const minutes = forgot ? 60 : 15;
     card.replaceChildren(
       h('span', { class: 'badge private' }, 'Privat'),
-      h('h2', {}, 'Passwort vergessen'),
+      h('h2', {}, forgot ? 'Passwort vergessen' : 'Anmeldelink per E-Mail'),
       sentTo
         ? h('div', { class: 'hint' },
           h('p', {}, 'Falls es für ', h('strong', {}, sentTo), ' ein Konto gibt, haben wir dir eine E-Mail mit einem Link geschickt.'),
-          h('p', { class: 'small' }, 'Der Link ist 60 Minuten gültig. Schau auch im Spam-Ordner nach.'))
-        : h('p', { class: 'muted small' }, 'Gib die E-Mail-Adresse deines Kontos ein. Wir schicken dir einen Link, mit dem du ein neues Passwort festlegst.'),
-      !sentTo && h('form', {
+          h('p', { class: 'small' }, `Der Link ist ${minutes} Minuten gültig. Schau auch im Spam-Ordner nach.`))
+        : h('p', { class: 'muted small' }, forgot
+          ? 'Gib die E-Mail-Adresse deines Kontos ein. Wir schicken dir einen Link, mit dem du ein neues Passwort festlegst.'
+          : 'Gib die E-Mail-Adresse deines Kontos ein. Wir schicken dir einen Link, mit dem du dich ohne Passwort anmeldest.'),
+      sentTo ? '' : h('form', {
         onsubmit: submitHandler(async (v) => {
-          const res = await api('/api/password/forgot', { method: 'POST', body: v });
+          const res = await api(forgot ? '/api/password/forgot' : '/api/login/link', { method: 'POST', body: v });
           sentTo = v.email.trim();
-          drawForgot();
+          drawMailRequest();
           // Nur in der Vorschau: Dort gibt es keinen Mailversand, der Link kommt direkt zurück.
           if (res.demoLink) {
             card.append(h('button', { type: 'button', onclick: () => go(res.demoLink) }, 'E-Mail-Link öffnen (Vorschau)'));
@@ -306,6 +314,26 @@ function userCard() {
   };
   draw();
   return card;
+}
+
+async function viewLoginLink(token) {
+  try {
+    const res = await api('/api/login/token', { method: 'POST', body: { token } });
+    state.user = res.user;
+    // Den Link aus dem Browserverlauf entfernen.
+    try {
+      history.replaceState(null, '', location.pathname + location.search);
+    } catch {
+      // ignorieren
+    }
+    go('/noten');
+  } catch (err) {
+    app.replaceChildren(h('section', { class: 'card narrow' },
+      h('h1', {}, 'Anmeldung per Link'),
+      h('p', { class: 'error' }, err.message),
+      h('button', { type: 'button', onclick: () => go('/') }, 'Zur Anmeldung'),
+    ));
+  }
 }
 
 function viewReset(token) {
