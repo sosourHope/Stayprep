@@ -21,7 +21,8 @@ Am besten ein eigenes Gmail-Konto nur für StayPrep anlegen, z. B. `stayprep.mei
 > **Alternative Brevo:** Falls der Gmail-Versand nicht klappt (manche Hoster sperren den Mailversand
 > per SMTP), auf brevo.com ein kostenloses Konto anlegen (300 Mails/Tag), unter „Senders“ die
 > Absenderadresse bestätigen und unter „SMTP & API → API Keys“ einen Schlüssel erstellen.
-> Dann bei Render `BREVO_API_KEY` und `MAIL_FROM` ausfüllen – die SMTP-Felder werden dann ignoriert.
+> Dann bei Render im Dienst unter **Environment** die Variable `BREVO_API_KEY` hinzufügen und `MAIL_FROM`
+> auf die bestätigte Absenderadresse setzen – die SMTP-Werte werden dann ignoriert.
 
 ## 2. Code auf den Hauptzweig bringen
 
@@ -40,7 +41,6 @@ Dazu den Pull Request mit den StayPrep-Änderungen auf GitHub **mergen**.
    | `SMTP_USER` | die Gmail-Adresse aus Schritt 1 |
    | `SMTP_PASS` | das App-Passwort aus Schritt 1 |
    | `MAIL_FROM` | die Gmail-Adresse aus Schritt 1 (oder bei Brevo die bestätigte Absenderadresse) |
-   | `BREVO_API_KEY` | leer lassen (nur bei Brevo ausfüllen) |
    | `JAHRGANG_CODE_11` / `_12` / `_13` | selbst ausgedachte Zugangscodes für die Jahrgangsbereiche (mind. 6 Zeichen) |
 
 4. **Apply** klicken. Nach ein paar Minuten läuft die App unter einer Adresse wie

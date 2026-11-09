@@ -20,7 +20,8 @@ services:
         value: "22"
       - key: DB_FILE
         value: /var/data/db.json
-      # E-Mail-Versand: entweder Gmail (SMTP) ...
+      # E-Mail-Versand über Gmail (SMTP). Alternative Brevo: später unter
+      # Environment die Variable BREVO_API_KEY ergänzen (siehe ONLINE-STELLEN.md).
       - key: SMTP_HOST
         value: smtp.gmail.com
       - key: SMTP_PORT
@@ -28,9 +29,6 @@ services:
       - key: SMTP_USER
         sync: false
       - key: SMTP_PASS
-        sync: false
-      # ... oder Brevo (dann BREVO_API_KEY ausfüllen, SMTP-Werte werden ignoriert)
-      - key: BREVO_API_KEY
         sync: false
       - key: MAIL_FROM
         sync: false
